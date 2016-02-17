@@ -12,7 +12,8 @@ def enumerate(app):
     c = app.config
     app.log.debug(c.get_sections())
     app.log.debug(c.keys('files'))
-    app.log.debug(c.get('files', 'bla'))
+    app.log.debug(c.get('files', 'include'))
+    app.log.debug(c.get('files', 'exclude'))
     pass
 
 

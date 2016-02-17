@@ -30,6 +30,15 @@ class LogHandler(LoggingLogHandler):
         super().debug(msg, ns, **kw)
 
 
+class ConfigHandler(ConfigParserConfigHandler):
+    def __init__(self, *args, **kw):
+        super().__init__(strict=False)
+        self._strict = False
+        print('in custom ConfigHandler')
+
+
+ch = ConfigHandler()
+
 class SysChangeMonApp(CementApp):
     class Meta:
         label = 'SysChangeMon'
@@ -52,6 +61,11 @@ class SysChangeMonApp(CementApp):
 
         # Custom log handler
         log_handler = LogHandler
+
+        # Custom config handler
+        config_handler = ConfigHandler
+
+        core_extensions = ['cement.ext.ext_dummy', 'cement.ext.ext_smtp', 'cement.ext.ext_plugin', 'cement.ext.ext_argparse']
 
 
 class SysChangeMonTestApp(SysChangeMonApp):
