@@ -1,6 +1,7 @@
 """syschangemon base controller."""
 from cement.core import hook
 from cement.core.controller import CementBaseController, expose
+from cement.core import handler, hook
 
 
 class SysChangeMonBaseController(CementBaseController):
@@ -16,6 +17,13 @@ class SysChangeMonBaseController(CementBaseController):
     @expose(hide=True)
     def default(self):
         self.app.log.debug("Inside SysChangeMonBaseController.default().")
+
+        for h in handler.list('scmplugin'):
+            print(h)
+            n=h()
+            print(n)
+            n._setup(self.app)
+            n.enumerate()
 
         for res in hook.run('enumerate', self.app):
             self.app.log.debug('enumerate result: %s' % res)
