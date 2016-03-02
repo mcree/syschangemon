@@ -7,6 +7,10 @@ from cement.core.foundation import CementApp
 from cli.ext.pluginbase import SCMPluginBase, SCMPluginInterface
 import os, globre
 
+from core.model import Model
+from pony.orm.core import db_session
+
+
 class FSPlugin(SCMPluginBase):
     """
     filesystem plugin base class
@@ -130,6 +134,18 @@ class FSPlugin(SCMPluginBase):
         filelist = filteredlist
 
         self.app.log.debug("filelist: %s" % filelist)
+
+        with db_session:
+            for f in filelist:
+                try:
+                    with open(f, mode='rb') as file:
+                        cnt = file.read()
+                        stat = os.stat(f)
+                        Model.Rec(name=f, content=cnt, size=stat.st_size)
+                    #t.insert({f: stat})
+                except (FileNotFoundError, PermissionError):
+                    pass
+
 
         return filelist
 

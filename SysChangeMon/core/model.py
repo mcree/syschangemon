@@ -3,6 +3,19 @@ from abc import abstractmethod
 from collections import MutableSet, Set
 from urllib.parse import urlparse
 
+from pony.orm.core import Database, PrimaryKey, Required, Optional
+
+
+class Model:
+
+    db = Database()
+
+    class Rec(db.Entity):
+        id = PrimaryKey(int, auto=True)
+        name = Required(str)
+        size = Optional(int)
+        content = Optional(bytes)
+
 
 class SysStateItem:
     """
