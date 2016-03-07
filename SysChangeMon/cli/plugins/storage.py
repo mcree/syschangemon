@@ -2,7 +2,26 @@ from cement.core import hook
 
 import os
 
-from core.model import Model
+import core.model
+from peewee import BlobField
+from playhouse.dataset import DataSet
+from playhouse.dataset import Table
+
+class MyDataSet(DataSet):
+    def __getitem__(self, table):
+        return MyTable(self, table, self._models.get(table))
+
+class MyTable(Table):
+    def _guess_field_type(self, value):
+        print(type(value))
+        if isinstance(value, bytes):
+            return BlobField
+        return super()._guess_field_type(value)
+
+    def upsert(self, columns=None, conjunction=None, **data):
+        # TODO
+        pass
+
 
 class Storage():
 
@@ -14,12 +33,20 @@ class Storage():
         except:
             pass
 
-        Model.db.bind('sqlite', dir+'/db.sqlite', create_db=True)
-        Model.db.generate_mapping(check_tables=True, create_tables=True)
+        #core.model.db.bind('sqlite', dir+'/db.sqlite', create_db=True)
+        #core.model.db.generate_mapping(check_tables=True, create_tables=True)
 
-        self.db = Model.db
+        #self.db = core.model.db
 
-        app.log.debug("opened %s" % (Model.db))
+        dburl = 'sqlite:///'+dir+"/db.sqlite"
+        #dburl = 'sqlite:///:memory:'
+
+        app.log.debug("opening %s" % (dburl))
+
+        self.db = MyDataSet(dburl)
+
+        app.log.debug("opened %s" % (self.db))
+
 
 
 def extend_app(app):

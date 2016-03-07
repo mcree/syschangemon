@@ -1,5 +1,4 @@
 """Filesystem Plugin for syschangemon."""
-
 from cement.core import handler, hook
 from cement.core.config import IConfig
 from cement.core.controller import CementBaseController
@@ -7,7 +6,7 @@ from cement.core.foundation import CementApp
 from cli.ext.pluginbase import SCMPluginBase, SCMPluginInterface
 import os, globre
 
-from core.model import Model
+import core.model
 from pony.orm.core import db_session
 
 
@@ -135,14 +134,18 @@ class FSPlugin(SCMPluginBase):
 
         self.app.log.debug("filelist: %s" % filelist)
 
-        with db_session:
+        t = self.app.storage.db["filelist"]
+
+        with self.app.storage.db.transaction():
             for f in filelist:
                 try:
                     with open(f, mode='rb') as file:
                         cnt = file.read()
                         stat = os.stat(f)
-                        Model.Rec(name=f, content=cnt, size=stat.st_size)
+                        #State(name=f, content=cnt, size=stat.st_size)
                     #t.insert({f: stat})
+
+                        t.upsert(uri=f, content=bytes(cnt), size=stat.st_size, columns=['uri'])
                 except (FileNotFoundError, PermissionError):
                     pass
 

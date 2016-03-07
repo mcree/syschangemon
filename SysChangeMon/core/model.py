@@ -1,20 +1,85 @@
 """ System Change Data Model Classes """
+import datetime
 from abc import abstractmethod
-from collections import MutableSet, Set
+from collections import MutableSet
 from urllib.parse import urlparse
 
-from pony.orm.core import Database, PrimaryKey, Required, Optional
+from datetime import date, time, datetime
+from uuid import UUID, uuid4
 
+from pony.orm.core import Database, PrimaryKey, Required, Optional, Set, Discriminator
 
-class Model:
+def define_model(*args, **kwargs):
 
-    db = Database()
+    db = Database(*args, **kwargs)
 
-    class Rec(db.Entity):
+    class Session(db.Entity):
         id = PrimaryKey(int, auto=True)
-        name = Required(str)
-        size = Optional(int)
-        content = Optional(bytes)
+        state = Set("StoredState")
+        uuid = Required(UUID, default=uuid4)
+        stamp = Required(datetime, default=datetime.now())
+
+        def __str__(self):
+            s = super.__str__(self)
+            s += "("
+            s += "id:%s " % self.id
+            s += "uuid:%s " % self.uuid
+            s += "stamp:%s " % self.stamp
+            s += "state:%s" % self.state
+            s += ")"
+            return s
+
+    class TypedSet(Set):
+        def __setitem__(self, key, value):
+            if type(value) is str:
+                self.create
+
+    class StoredState(db.Entity):
+        session = Required(Session)
+        uri = PrimaryKey(str)
+        meta = TypedSet("StateMeta")
+
+    class StateMeta(db.Entity):
+        state = Required(StoredState)
+        key = Required(str)
+        PrimaryKey(state, key)
+        type = Discriminator(str)
+
+    class StateMetaStr(StateMeta):
+        _discriminator_ = 'str'
+        str_value = Required(str, index=True)
+
+    class StateMetaInt(StateMeta):
+        _discriminator_ = 'int'
+        int_value = Required(int, index=True)
+
+    class StateMetaFloat(StateMeta):
+        _discriminator_ = 'float'
+        float_value = Required(float, index=True)
+
+    class StateMetaDate(StateMeta):
+        _discriminator_ = 'date'
+        date_value = Required(date, index=True)
+
+    class StateMetaTime(StateMeta):
+        _discriminator_ = 'time'
+        time_value = Required(time, index=True)
+
+    class StateMetaDateTime(StateMeta):
+        _discriminator_ = 'datetime'
+        datetime_value = Required(datetime, index=True)
+
+    class StateMetaBool(StateMeta):
+        _discriminator_ = 'bool'
+        bool_value = Required(bool, index=True)
+
+    class StateMetaBytes(StateMeta):
+        _discriminator_ = 'bytes'
+        bytes_value = Required(bytes, index=True)
+
+    db.generate_mapping(check_tables=True, create_tables=True)
+
+    return db
 
 
 class SysStateItem:
