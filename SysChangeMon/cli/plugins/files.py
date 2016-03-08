@@ -7,6 +7,7 @@ from cli.ext.pluginbase import SCMPluginBase, SCMPluginInterface
 import os, globre
 
 import core.model
+from peewee import OperationalError
 from pony.orm.core import db_session
 
 
@@ -143,11 +144,12 @@ class FSPlugin(SCMPluginBase):
                         cnt = file.read()
                         stat = os.stat(f)
                         #State(name=f, content=cnt, size=stat.st_size)
-                    #t.insert({f: stat})
+                        #t.insert({f: stat})
 
-                        t.upsert(uri=f, content=bytes(cnt), size=stat.st_size, columns=['uri'])
+                        t.upsert(uri=f, content=bytes(cnt), size=stat.st_size, columns=["uri"])
                 except (FileNotFoundError, PermissionError):
                     pass
+
 
 
         return filelist
