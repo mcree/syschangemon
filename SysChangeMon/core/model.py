@@ -1,175 +1,61 @@
 """ System Change Data Model Classes """
-import datetime
-from abc import abstractmethod
-from collections import MutableSet
-from urllib.parse import urlparse
 
-from datetime import date, time, datetime
-from uuid import UUID, uuid4
-
-from pony.orm.core import Database, PrimaryKey, Required, Optional, Set, Discriminator
-
-def define_model(*args, **kwargs):
-
-    db = Database(*args, **kwargs)
-
-    class Session(db.Entity):
-        id = PrimaryKey(int, auto=True)
-        state = Set("StoredState")
-        uuid = Required(UUID, default=uuid4)
-        stamp = Required(datetime, default=datetime.now())
-
-        def __str__(self):
-            s = super.__str__(self)
-            s += "("
-            s += "id:%s " % self.id
-            s += "uuid:%s " % self.uuid
-            s += "stamp:%s " % self.stamp
-            s += "state:%s" % self.state
-            s += ")"
-            return s
-
-    class TypedSet(Set):
-        def __setitem__(self, key, value):
-            if type(value) is str:
-                self.create
-
-    class StoredState(db.Entity):
-        session = Required(Session)
-        uri = PrimaryKey(str)
-        meta = TypedSet("StateMeta")
-
-    class StateMeta(db.Entity):
-        state = Required(StoredState)
-        key = Required(str)
-        PrimaryKey(state, key)
-        type = Discriminator(str)
-
-    class StateMetaStr(StateMeta):
-        _discriminator_ = 'str'
-        str_value = Required(str, index=True)
-
-    class StateMetaInt(StateMeta):
-        _discriminator_ = 'int'
-        int_value = Required(int, index=True)
-
-    class StateMetaFloat(StateMeta):
-        _discriminator_ = 'float'
-        float_value = Required(float, index=True)
-
-    class StateMetaDate(StateMeta):
-        _discriminator_ = 'date'
-        date_value = Required(date, index=True)
-
-    class StateMetaTime(StateMeta):
-        _discriminator_ = 'time'
-        time_value = Required(time, index=True)
-
-    class StateMetaDateTime(StateMeta):
-        _discriminator_ = 'datetime'
-        datetime_value = Required(datetime, index=True)
-
-    class StateMetaBool(StateMeta):
-        _discriminator_ = 'bool'
-        bool_value = Required(bool, index=True)
-
-    class StateMetaBytes(StateMeta):
-        _discriminator_ = 'bytes'
-        bytes_value = Required(bytes, index=True)
-
-    db.generate_mapping(check_tables=True, create_tables=True)
-
-    return db
+from datetime import datetime, date
+from uuid import uuid4
+from decimal import Decimal
+from peewee import BlobField, OperationalError
+from playhouse.dataset import DataSet
+from playhouse.dataset import Table
 
 
-class SysStateItem:
-    """
-    Abstract archetype for system state items. Represents actual state of a system component.
-    """
+class MyDataSet(DataSet):
+    def __getitem__(self, table):
+        return MyTable(self, table, self._models.get(table))
 
-    def __init__(self, uri: str):
-        """
-        Create instance
 
-        :param uri: URI string identifying system state item
-        :return: instance
-        """
-        urlparse(uri)  # string format check
-        self.__uri = uri
-        self.__payload = None
-        self.__meta = dict()
+class MyTable(Table):
+    def _guess_field_type(self, value):
+        #print(type(value))
+        if isinstance(value, bytes):
+            return BlobField
+        return super()._guess_field_type(value)
 
-    @abstractmethod
-    def refresh(self):
-        """
-        Refresh state information from the underlying system component.
-
-        State information consists of:
-        *  payload: textual representation of complete system component state (eg: file content)
-        *  meta: dictionary of key:value (str:str) pairs representing system component meta information (eg: file size,
-           owner, mtime, ctime)
-
-        This method should not be called very frequently to prevent heavy system load.
-
-        :return: None
-        """
-        pass
-
-    def __str__(self):
-        """
-        :return: Compact text representation of URI and meta
-        """
-        res = self.__uri+" "
-        for (k, v) in self.__meta.items():
-            res += "%15s:%15s " % (k, v)
+    def insert(self, **data):
+        new_keys = set(data) - set(self.model_class._meta.fields)
+        res = super().insert(**data)
+        for key in new_keys:
+            if isinstance(data[key], (str, int, date, datetime, Decimal)) or data[key] is True or data[key] is False:
+                #print("indexing %s" % key)
+                try:
+                    self.create_index([key])
+                except OperationalError:
+                    pass
         return res
 
-    @property
-    def payload(self) -> str:
-        return self.__payload
-
-    @property
-    def meta(self) -> dict:
-        return self.__meta
-
-    @property
-    def scheme(self):
-        return urlparse(self.__uri).scheme
-
-    @property
-    def path(self):
-        return urlparse(self.__uri).path
+    def upsert(self, columns=None, conjunction=None, **data):
+        query = {}
+        cols = set(columns) & set(self.model_class._meta.fields)
+        if len(cols) != len(set(columns)):
+            return self.insert(**data)
+        for col in cols:
+            query[col] = data[col]
+        res = self.find(**query)
+        if len(res) > 0:
+            return self.update(columns, conjunction, **data)
+        else:
+            return self.insert(**data)
 
 
-class SysState(MutableSet):
-    """
-    System state container
-    """
+class Model:
+    def __init__(self, db_uri="sqlite:///:memory:"):
+        self._db = MyDataSet(db_uri)
+        self._sessions = self._db['sessions']
 
-    def __len__(self):
-        return self.__states.__len__()
+    def create_session(self, uuid=str(uuid4()), stamp=datetime.now()):
+        session = {'uuid': uuid, 'stamp': stamp}
+        self._sessions.insert(**session)
+        return session
 
-    def __iter__(self):
-        return self.__states.__iter__()
-
-    def discard(self, value: SysStateItem):
-        assert isinstance(value, SysStateItem)
-        return self.__states.discard(value)
-
-    def add(self, value: SysStateItem):
-        assert isinstance(value, SysStateItem)
-        return self.__states.add(value)
-
-    def __contains__(self, x):
-        return self.__states.__contains__(x)
-
-    def __init__(self, states: Set = set()):
-        """
-        Create system state container
-
-        :param states: initial values, Set of SysStateItem instances
-        :return: System state container instance
-        """
-        assert isinstance(states, MutableSet)
-        self.__states = states
-        return
+    def last_session(self):
+        uuid = self._db.query('select uuid from sessions order by stamp desc').fetchone()
+        return self._sessions.find_one(uuid = uuid)

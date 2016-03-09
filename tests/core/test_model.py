@@ -1,26 +1,18 @@
-import pprint
-from inspect import getmembers
 from unittest import TestCase
-
-import core.model
-from pony.orm.core import db_session
+from core.model import Model
 
 
 class TestModel(TestCase):
     def setUp(self):
-        print('setup')
-        self.db = core.model.define_model('sqlite', ':memory:', create_db=True)
+        self.model = Model('sqlite:///:memory:')
 
-    @db_session
+    def dump_db(self):
+        for line in self.model._db._database.get_conn().iterdump():
+            print(line)
+
     def test_set(self):
-        print('test_set')
-        s = self.db.Session()
-        print(s)
-        ss = self.db.StoredState(session=s, uri="dummy://")
-#        print(ss)
-        ss.meta.add(self.db.StateMetaStr(state=ss, key="a", str_value="b"))
-        ss.meta.add(self.db.StateMetaStr(state=ss, key="b", str_value="c"))
-        print(ss.meta.count())
-        for m in ss.meta:
-            print(m)
-#        print(ss.meta.aaa)
+        print('begin test_set')
+        a = self.model.create_session(uuid='a')
+        b = self.model.create_session(uuid='b')
+        c = self.model.last_session()
+        self.assertEqual('b', c['uuid'])
