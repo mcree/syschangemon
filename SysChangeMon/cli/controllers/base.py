@@ -2,6 +2,9 @@
 from cement.core import hook
 from cement.core.controller import CementBaseController, expose
 from cement.core import handler, hook
+from cli.ext.pluginbase import UnsupportedException
+from core.model import Model
+from core.sessiondiff import SessionDiff
 
 
 class SysChangeMonBaseController(CementBaseController):
@@ -18,18 +21,63 @@ class SysChangeMonBaseController(CementBaseController):
     def default(self):
         self.app.log.debug("Inside SysChangeMonBaseController.default().")
 
-        for h in handler.list('scmplugin'):
-            print(h)
-            n=h()
-            print(n)
-            n._setup(self.app)
-            n.enumerate()
+        db = self.app.storage.db
+        assert isinstance(db, Model)
+
+        try:
+            last = db.last_closed_session()
+            for sess in db.find_sessions():
+                if sess['uuid'] != last['uuid']:
+                    sess.delete()
+        except:
+            pass
+
+        session = db.new_session()
+        session.save()
+
+        plugins = {}
+        for h in handler.list('state_plugin'):
+            plugin = h()
+            plugin.setup(self.app)
+            plugins[plugin.label]=plugin
+
+        urls = []
+        for plugin in plugins.values():
+            urls += plugin.list_urls()
+
+        for plugin in plugins.values():
+            urls = plugin.process_urls(urls)
+
+        for label, plugin in plugins.items():
+            with db.transaction():
+                for url in urls:
+                    try:
+                        statedict = plugin.get_state(url)
+                        if statedict is not None:
+                            state = session.new_state(url=url, plugin=label, **statedict)
+                            #self.app.log.debug("read state: %s" % state)
+                            state.save()
+                    except UnsupportedException:
+                        pass
+
+        with db.transaction():
+            for state in session.find_states():
+                for plugin in plugins.values():
+                    old = state.copy()
+                    new = plugin.process_state(state)
+                    if old != new:
+                        state.save()
+                        #self.app.log.debug("updated state: %s" % state)
 
         for res in hook.run('enumerate', self.app):
             self.app.log.debug('enumerate result: %s' % res)
 
+        session['closed'] = True
+        session.save()
 
-    
+        print(SessionDiff(last, session))
+
+        # TODO: implement db cleanup, eg: db.query('VACUUM')
 
         # If using an output handler such as 'mustache', you could also
         # render a data dictionary using a template.  For example:

@@ -1,23 +1,38 @@
 """Filesystem Plugin for syschangemon."""
+import hashlib
+from urllib.parse import urlparse
+
+import sys
+
+import binascii
+
+import pwd
+
+import grp
+
 from cement.core import handler, hook
 from cement.core.config import IConfig
 from cement.core.controller import CementBaseController
 from cement.core.foundation import CementApp
-from cli.ext.pluginbase import SCMPluginBase, SCMPluginInterface
+from cli.ext.pluginbase import StatePluginBase, StatePluginInterface, UnsupportedException
 import os, globre
 
 import core.model
+from core.model import Session
+from partialhash import compute_from_path
 from peewee import OperationalError
 from pony.orm.core import db_session
 
 
-class FSPlugin(SCMPluginBase):
+class FilePlugin(StatePluginBase):
     """
     filesystem plugin base class
     """
     class Meta:
-        label = 'files'
-        interface = SCMPluginInterface
+        label = 'file'
+        interface = StatePluginInterface
+
+    #_meta = Meta
 
     @staticmethod
     def _process_pattern_list(l):
@@ -77,27 +92,32 @@ class FSPlugin(SCMPluginBase):
 
         return list(set(flat)), list(set(deep))
 
-    def enumerate(self):
-        c = self.app.config
+    def setup(self, app):
+        super().setup(app)
 
-        filelist = []
+        c = app.config
 
         # get include and exclude list from config file
-        include = self._process_pattern_list(c.get('files', 'include').split('\n'))
-        exclude = self._process_pattern_list(c.get('files', 'exclude').split('\n'))
+        self.include = self._process_pattern_list(c.get(self._meta.label, 'include').split('\n'))
+        self.exclude = self._process_pattern_list(c.get(self._meta.label, 'exclude').split('\n'))
 
         # compile globre patterns for include and exclude
-        includepats = []
-        for pat in include:
-            includepats.append(globre.compile(pat, flags=globre.EXACT, split_prefix=False))
+        self.includepats = []
+        for pat in self.include:
+            self.includepats.append(globre.compile(pat, flags=globre.EXACT, split_prefix=False))
 
-        excludepats = []
-        for pat in exclude:
-            excludepats.append(globre.compile(pat, flags=globre.EXACT, split_prefix=False))
+        self.excludepats = []
+        for pat in self.exclude:
+            self.excludepats.append(globre.compile(pat, flags=globre.EXACT, split_prefix=False))
+
+        os.stat_float_times(True)
+
+    def list_urls(self) -> list:
+        filelist = []
 
         # find base dirs for include
-        self.app.log.debug("enumerating using include: %s exclude: %s" % (include, exclude))
-        (flat, deep) = self._find_base_dirs(include)
+        self.app.log.debug("enumerating using include: %s exclude: %s" % (self.include, self.exclude))
+        (flat, deep) = self._find_base_dirs(self.include)
 
         self.app.log.debug("walk destinations: flat: %s deep: %s" % (flat, deep))
 
@@ -106,7 +126,7 @@ class FSPlugin(SCMPluginBase):
             for name in os.listdir(f):
                 filename = os.path.join(f, name)
                 if os.path.isfile(filename):
-                    for pat in includepats:
+                    for pat in self.includepats:
                         if pat.match(filename):
                             filelist.append(filename)
 
@@ -115,7 +135,7 @@ class FSPlugin(SCMPluginBase):
             for root, dirs, files in os.walk(d):
                 for name in files:
                     filename = os.path.join(root, name)
-                    for pat in includepats:
+                    for pat in self.includepats:
                         if pat.match(filename):
                             filelist.append(filename)
 
@@ -123,43 +143,64 @@ class FSPlugin(SCMPluginBase):
         filteredlist = []
         for f in filelist:
             is_exclude = False
-            for pat in excludepats:
+            for pat in self.excludepats:
                 if pat.match(f):
                     self.app.log.debug("%s excluded by %s" % (f, pat))
                     is_exclude = True
                     break
             if is_exclude == False:
-                filteredlist.append(f)
+                filteredlist.append(self._meta.label+'://'+f)
 
         filelist = filteredlist
 
-        self.app.log.debug("filelist: %s" % filelist)
-
-        t = self.app.storage.db["filelist"]
-
-        with self.app.storage.db.transaction():
-            for f in filelist:
-                try:
-                    with open(f, mode='rb') as file:
-                        cnt = file.read()
-                        stat = os.stat(f)
-                        #State(name=f, content=cnt, size=stat.st_size)
-                        #t.insert({f: stat})
-
-                        t.upsert(uri=f, content=bytes(cnt), size=stat.st_size, columns=["uri"])
-                except (FileNotFoundError, PermissionError):
-                    pass
-
-
+        #self.app.log.debug("filelist: %s" % filelist)
 
         return filelist
+
+    # noinspection PyBroadException
+    def get_state(self, url) -> dir:
+        purl = urlparse(url)
+        if purl.scheme != 'file':
+            raise UnsupportedException
+        res = {}
+        path = purl.path
+        try:
+            stat = os.stat(path)
+            res['size'] = stat.st_size
+            res['ctime'] = stat.st_ctime
+            res['mtime'] = stat.st_mtime
+            res['mode'] = stat.st_mode
+            res['uid'] = stat.st_uid
+            res['gid'] = stat.st_gid
+            res['uid_name'] = pwd.getpwuid(stat.st_uid).pw_name
+            res['gid_name'] = grp.getgrgid(stat.st_gid).gr_name
+        except:
+            e = sys.exc_info()[1]
+            res['stat_error'] = e
+
+        try:
+            attrs = os.listxattr(path)
+            for attr in attrs:
+                res['xattr_'+attr] = True
+        except:
+            e = sys.exc_info()[1]
+            res['xattr_error'] = e
+
+        try:
+            digest = compute_from_path(path, hash_algorithm=hashlib.sha256)
+            res['hash'] = binascii.hexlify(digest)
+        except:
+            e = sys.exc_info()[1]
+            res['hash_error'] = e
+
+        return res
 
 
 def load(app: CementApp):
     app.log.debug('in load')
     #hook.register('enumerate', enumerate)
 
-    handler.register(FSPlugin)
+    handler.register(FilePlugin)
 
     # register the plugin class.. this only happens if the plugin is enabled
     #handler.register(ExamplePluginController)

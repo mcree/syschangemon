@@ -11,7 +11,7 @@ from SysChangeMon.core import exc
 
 # Application default.  Should update config/SysChangeMon.conf to reflect any
 # changes, or additions here.
-from cli.ext.pluginbase import SCMPluginInterface
+from cli.ext.pluginbase import StatePluginInterface
 
 defaults = init_defaults('SysChangeMon')
 
@@ -69,7 +69,7 @@ class SysChangeMonApp(CementApp):
 
         core_extensions = ['cement.ext.ext_dummy', 'cement.ext.ext_smtp', 'cement.ext.ext_plugin', 'cement.ext.ext_argparse']
 
-        define_handlers = [SCMPluginInterface]
+        define_handlers = [StatePluginInterface]
 
 
 class SysChangeMonTestApp(SysChangeMonApp):

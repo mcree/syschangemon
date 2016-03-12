@@ -1,11 +1,19 @@
+from abc import abstractmethod
+from urllib.parse import urlparse
+
 from cement.core.foundation import CementApp
 from cement.core.interface import Interface, Attribute
 from cement.core.handler import CementBaseHandler
+from core.model import State
 
 
-class SCMPluginInterface(Interface):
+class UnsupportedException(BaseException):
+    pass
+
+
+class StatePluginInterface(Interface):
     class IMeta:
-        label = 'scmplugin'
+        label = 'state_plugin'
 
     Meta = Attribute('Handler Meta-data')
 
@@ -31,19 +39,33 @@ class SCMPluginInterface(Interface):
         """
 
 
-class SCMPluginBase(CementBaseHandler):
+class StatePluginBase(CementBaseHandler):
     class Meta:
-        interface = SCMPluginInterface
-        label = 'SysChangeMon Plugin Base'
+        interface = StatePluginInterface
+        label = 'base'
 
-    _meta = Meta
+#    _meta = Meta
 
     def __init__(self):
+        self._meta = self.Meta
         self.app = None
 
-    def _setup(self, app_obj):
+    def setup(self, app_obj):
         self.app = app_obj
-        print("Doing work @ _setup!")
+        #print("Doing work @ _setup!")
 
-    def enumerate(self):
-        print("Doing work @ enumerate!")
+    def list_urls(self) -> list:
+        return []
+
+    def get_state(self, url) -> dict:
+        raise UnsupportedException
+
+    def process_urls(self, urls) -> list:
+        return urls
+
+    def process_state(self, state: State) -> State:
+        return state
+
+    @property
+    def label(self):
+        return self._meta.label
