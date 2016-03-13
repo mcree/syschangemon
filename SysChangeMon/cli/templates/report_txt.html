@@ -1,0 +1,5 @@
+{% set cols=[10,60,60] %}
+{{ tr('session', '{:%Y-%m-%d %H:%M:%S} (old)'|format3(old_session.stamp), '{:%Y-%m-%d %H:%M:%S} (new)'|format3(new_session.stamp), cols=cols) }}
+{{ hr(cols=cols) }}
+{{ tr('uuid', old_session.uuid, new_session.uuid, cols=cols) }}
+{{ tr('lipsum', lipsum(html=False), lipsum(html=False), cols=cols) }}

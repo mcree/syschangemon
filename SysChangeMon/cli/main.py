@@ -12,6 +12,7 @@ from SysChangeMon.core import exc
 # Application default.  Should update config/SysChangeMon.conf to reflect any
 # changes, or additions here.
 from cli.ext.pluginbase import StatePluginInterface
+from core.jinjaoutput import JinjaOutputHandler
 
 defaults = init_defaults('SysChangeMon')
 
@@ -70,6 +71,8 @@ class SysChangeMonApp(CementApp):
         core_extensions = ['cement.ext.ext_dummy', 'cement.ext.ext_smtp', 'cement.ext.ext_plugin', 'cement.ext.ext_argparse']
 
         define_handlers = [StatePluginInterface]
+
+        output_handler = JinjaOutputHandler
 
 
 class SysChangeMonTestApp(SysChangeMonApp):

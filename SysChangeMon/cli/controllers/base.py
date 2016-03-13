@@ -5,6 +5,7 @@ from cement.core import handler, hook
 from cli.ext.pluginbase import UnsupportedException
 from core.model import Model
 from core.sessiondiff import SessionDiff
+from html2text import HTML2Text
 
 
 class SysChangeMonBaseController(CementBaseController):
@@ -75,8 +76,10 @@ class SysChangeMonBaseController(CementBaseController):
         session['closed'] = True
         session.save()
 
-        print(SessionDiff(last, session))
+        diff = SessionDiff(last, session)
 
+        report = self.app.render(diff.__dict__, 'report_txt.html', out=None)
+        print(report)
         # TODO: implement db cleanup, eg: db.query('VACUUM')
 
         # If using an output handler such as 'mustache', you could also

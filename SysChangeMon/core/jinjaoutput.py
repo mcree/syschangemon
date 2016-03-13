@@ -1,0 +1,94 @@
+import textwrap
+from cement.core import output
+from cement.core.output import TemplateOutputHandler
+from cement.utils.misc import minimal_logger
+from jinja2 import Template
+from jinja2.environment import Environment
+from jinja2.loaders import BaseLoader
+
+LOG = minimal_logger(__name__)
+
+
+def format3(val: str, *a, **kw):
+    return val.format(*a, **kw)
+
+
+def _tr(*args, separator, cols):
+    rargs = []
+    i = 0
+    for arg in args:
+        if len(cols) > i:
+            c = str(cols[i])
+            f = "{:"+c+"."+c+"}"
+            rargs.append(f.format(arg))
+        else:
+            rargs.append(arg)
+        i += 1
+    return separator.join(rargs)
+
+
+def tr(*args, separator=" | ", cols=[], wrap=True):
+    if wrap:
+        res = []
+        wargs = []
+        i = 0
+        maxlen = 0
+        for arg in args:
+            if len(cols) > i:
+                c = int(cols[i])
+                w = textwrap.wrap(arg, c)
+            else:
+                w = [arg]
+            if len(w) > maxlen:
+                maxlen = len(w)
+            wargs.append(w)
+            i += 1
+        for i in range(0, maxlen):
+            row = []
+            for warg in wargs:
+                if i < len(warg):
+                    row.append(warg[i])
+                else:
+                    row.append("")
+            res.append(_tr(*row, separator=separator, cols=cols))
+        return "\n".join(res)
+    else:
+        return _tr(*args, separator=separator, cols=cols)
+
+
+def hr(*args, char="-", separator="-+-", cols=[]):
+    res = []
+    for col in cols:
+        res.append(char * col)
+    return separator.join(res)
+
+
+class CementLoader(BaseLoader):
+    def __init__(self, handler):
+        self.handler = handler
+
+    def get_source(self, environment, template):
+        source = self.handler.load_template(template).decode('utf-8')
+        return source, template, lambda: False
+
+
+class JinjaOutputHandler(TemplateOutputHandler):
+    class Meta:
+        interface = output.IOutput
+        label = 'jinja2'
+
+    def _setup(self, app):
+        super()._setup(app)
+        self.env = Environment(loader=CementLoader(self))
+        self.env.filters['format3'] = format3
+        self.env.globals['tr'] = tr
+        self.env.globals['hr'] = hr
+
+    def render(self, data_dict, **kw):
+        template = kw.get('template', None)
+
+        LOG.debug("rendering output using '%s' as a template." % template)
+        jt = self.env.get_template(template)
+        return jt.render(data_dict, **kw)
+
+
