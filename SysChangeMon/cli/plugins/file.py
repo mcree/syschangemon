@@ -1,4 +1,5 @@
 """Filesystem Plugin for syschangemon."""
+import datetime
 import hashlib
 from urllib.parse import urlparse
 
@@ -22,6 +23,7 @@ from core.model import Session
 from partialhash import compute_from_path
 from peewee import OperationalError
 from pony.orm.core import db_session
+from tzlocal.unix import get_localzone
 
 
 class FilePlugin(StatePluginBase):
@@ -110,6 +112,8 @@ class FilePlugin(StatePluginBase):
         for pat in self.exclude:
             self.excludepats.append(globre.compile(pat, flags=globre.EXACT, split_prefix=False))
 
+        self.tz = get_localzone()
+
         os.stat_float_times(True)
 
     def list_urls(self) -> list:
@@ -167,8 +171,8 @@ class FilePlugin(StatePluginBase):
         try:
             stat = os.stat(path)
             res['size'] = stat.st_size
-            res['ctime'] = stat.st_ctime
-            res['mtime'] = stat.st_mtime
+            res['ctime'] = datetime.datetime.fromtimestamp(stat.st_ctime, tz=self.tz)
+            res['mtime'] = datetime.datetime.fromtimestamp(stat.st_mtime, tz=self.tz)
             res['mode'] = stat.st_mode
             res['uid'] = stat.st_uid
             res['gid'] = stat.st_gid

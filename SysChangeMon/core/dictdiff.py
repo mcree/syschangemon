@@ -31,7 +31,8 @@ class DictDiff:
         for key in keys2 - keys1:
             self.only2[key] = dict2[key]
 
-        self.both_neq = {}
+        self.both_neq_diff = {}
+        self.both_neq_tuple = {}
         self.both_eq = {}
         for key in keys1 & keys2:
             val1 = dict1[key]
@@ -42,10 +43,14 @@ class DictDiff:
                 if isinstance(val1, bytes):
                     val1 = val1.decode('utf-8')
                     val2 = val2.decode('utf-8')
-                self.both_neq[key] = self._diff_text(str(val1), str(val2))
+                if str(val1).find('\n') > 0:
+                    self.both_neq_diff[key] = self._diff_text(str(val1), str(val2))
+                else:
+                    self.both_neq_tuple[key] = (val1, val2)
 
     def is_empty(self):
-        return len(self.only1) == 0 and len(self.only2) == 0 and len(self.both_neq) == 0
+        return len(self.only1) == 0 and len(self.only2) == 0 \
+               and len(self.both_neq_diff) == 0 and len(self.both_neq_tuple) == 0
 
     def __repr__(self):
         res = ""
@@ -61,7 +66,7 @@ class DictDiff:
         #for k, v in self.both_eq.items():
         #    res += "=== %s: %s\n" % (k, str(v).replace('\n', '\n    '))
 
-        for k, v in self.both_neq.items():
+        for k, v in self.both_neq_diff.items():
             res += "!!! %s: \n    %s\n" % (k, str(v).replace('\n', '\n    '))
 
         return res

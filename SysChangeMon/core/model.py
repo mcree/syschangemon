@@ -6,6 +6,7 @@ from decimal import Decimal
 from peewee import BlobField, OperationalError
 from playhouse.dataset import DataSet
 from playhouse.dataset import Table
+from tzlocal.unix import get_localzone
 
 
 class MyDataSet(DataSet):
@@ -100,7 +101,7 @@ class Session(dict):
         if uuid is None:
             uuid = str(uuid4())
         if stamp is None:
-            stamp = datetime.now()
+            stamp = datetime.now(tz=get_localzone())
         self['uuid'] = uuid
         self['stamp'] = stamp
         self['closed'] = closed

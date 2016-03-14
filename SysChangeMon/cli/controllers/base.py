@@ -25,6 +25,7 @@ class SysChangeMonBaseController(CementBaseController):
         db = self.app.storage.db
         assert isinstance(db, Model)
 
+        last = None
         try:
             last = db.last_closed_session()
             for sess in db.find_sessions():
@@ -76,10 +77,14 @@ class SysChangeMonBaseController(CementBaseController):
         session['closed'] = True
         session.save()
 
-        diff = SessionDiff(last, session)
+        if last is not None:
+            diff = SessionDiff(last, session)
 
-        report = self.app.render(diff.__dict__, 'report_txt.html', out=None)
-        print(report)
+            report = self.app.render(diff.__dict__, 'report_txt.html', out=None)
+            print(report)
+
+        else:
+            print("no previous state - exiting without diff")
         # TODO: implement db cleanup, eg: db.query('VACUUM')
 
         # If using an output handler such as 'mustache', you could also

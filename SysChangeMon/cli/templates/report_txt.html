@@ -1,5 +1,28 @@
-{% set cols=[10,60,60] %}
-{{ tr('session', '{:%Y-%m-%d %H:%M:%S} (old)'|format3(old_session.stamp), '{:%Y-%m-%d %H:%M:%S} (new)'|format3(new_session.stamp), cols=cols) }}
-{{ hr(cols=cols) }}
+{%- set cols=[10,50,50] %}
+{%- set cols2=[10,100] %}
+{{ tr('', old_session.stamp|strftime('%Y-%m-%d %H:%M:%S %Z (old)'), new_session.stamp|strftime('%Y-%m-%d %H:%M:%S %Z (new)'), cols=cols) }}
+{{ hr(cols=cols, char='=', separator='=+=') }}
 {{ tr('uuid', old_session.uuid, new_session.uuid, cols=cols) }}
-{{ tr('lipsum', lipsum(html=False), lipsum(html=False), cols=cols) }}
+{%- if lost_urls|count>0 or found_urls|count>0 %}
+{{ hr(cols=cols) }}
+{{ tr('uniqe urls', lost_urls|join('\n'), found_urls|join('\n'), cols=cols) }}
+{%- endif %}
+{%- for diff in diffs %}
+{{ hr(cols=cols) }}
+{{ tr('', diff.label1, cols=cols2) }}
+{{ hr(cols=cols) }}
+{%- for ko1, vo1 in diff.only1.items() %}
+{{ tr(ko1, vo1, '', cols=cols) }}
+{%- endfor %}
+{%- for ko2, vo2 in diff.only2.items() %}
+{{ tr(ko2, vo2, '', cols=cols) }}
+{%- endfor %}
+{%- for k, v in diff.both_neq_tuple.items() %}
+{{ tr(k, v[0], v[1], cols=cols) }}
+{%- endfor %}
+{%- for k, v in diff.both_neq_diff.items() %}
+{{ hr(cols=cols) }}
+{{ tr("diff of "~k, v, cols=cols2) }}
+{%- endfor %}
+{{ hr(cols=cols) }}
+{%- endfor %}

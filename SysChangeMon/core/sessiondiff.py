@@ -19,9 +19,9 @@ class SessionDiff:
         self.diffs = []
         for url in self.equal_urls:
             old_state = old_session.get_state(url)
-            old_label = '(old) ' + old_state['url'] + ' @ ' + str(old_session['stamp'])
+            old_label = old_state['url']
             new_state = new_session.get_state(url)
-            new_label = '(new) ' + new_state['url'] + ' @ ' + str(new_session['stamp'])
+            new_label = new_state['url']
             diff = DictDiff(old_state, old_label, new_state, new_label, ['id', 'sessionid', 'uuid'])
             if not diff.is_empty():
                 self.diffs.append(diff)

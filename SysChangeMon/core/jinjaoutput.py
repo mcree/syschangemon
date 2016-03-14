@@ -1,10 +1,13 @@
 import textwrap
+from time import strftime
+
 from cement.core import output
 from cement.core.output import TemplateOutputHandler
 from cement.utils.misc import minimal_logger
 from jinja2 import Template
 from jinja2.environment import Environment
 from jinja2.loaders import BaseLoader
+from parsedatetime import Calendar
 
 LOG = minimal_logger(__name__)
 
@@ -36,7 +39,12 @@ def tr(*args, separator=" | ", cols=[], wrap=True):
         for arg in args:
             if len(cols) > i:
                 c = int(cols[i])
-                w = textwrap.wrap(arg, c)
+                w = []
+                if isinstance(arg, str):
+                    for a in arg.split('\n'):
+                        w += textwrap.wrap(a, c)
+                else:
+                    w = [str(arg)]
             else:
                 w = [arg]
             if len(w) > maxlen:
@@ -63,6 +71,15 @@ def hr(*args, char="-", separator="-+-", cols=[]):
     return separator.join(res)
 
 
+def is_multiline(arg: str):
+    return str(arg).find('\n') > 0
+
+
+def str_ftime(arg, format):
+    cal = Calendar()
+    return strftime(format, cal.parse(str(arg))[0])
+
+
 class CementLoader(BaseLoader):
     def __init__(self, handler):
         self.handler = handler
@@ -79,10 +96,12 @@ class JinjaOutputHandler(TemplateOutputHandler):
 
     def _setup(self, app):
         super()._setup(app)
-        self.env = Environment(loader=CementLoader(self))
+        self.env = Environment(loader=CementLoader(self), extensions=['jinja2.ext.do'])
         self.env.filters['format3'] = format3
         self.env.globals['tr'] = tr
         self.env.globals['hr'] = hr
+        self.env.globals['is_multiline'] = is_multiline
+        self.env.filters['strftime'] = str_ftime
 
     def render(self, data_dict, **kw):
         template = kw.get('template', None)
