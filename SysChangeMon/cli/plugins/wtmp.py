@@ -37,6 +37,12 @@ class WtmpPlugin(StatePluginBase):
 """
 
 excerpt from last.c:
+                case BOOT_TIME:
+                        strcpy(ut.ut_line, "system boot");
+                        quit = list(&ut, lastdown, R_REBOOT);
+                        lastboot = ut.ut_time;
+                        down = 1;
+                        break;
 
                 case USER_PROCESS:
                         /*
@@ -80,6 +86,21 @@ excerpt from last.c:
                                 quit = list(&ut, lastboot, c);
                         }
                         /* FALLTHRU */
+        /*
+         *      If we saw a shutdown/reboot record we can remove
+         *      the entire current utmplist.
+         */
+        if (down) {
+                lastboot = ut.ut_time;
+                whydown = (ut.ut_type == SHUTDOWN_TIME) ? R_DOWN : R_CRASH;
+                for (p = utmplist; p; p = next) {
+                        next = p->next;
+                        free(p);
+                }
+                utmplist = NULL;
+                down = 0;
+        }
+
 """
 
 def load(app: CementApp):
