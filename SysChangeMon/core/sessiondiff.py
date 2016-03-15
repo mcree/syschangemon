@@ -26,6 +26,7 @@ class SessionDiff:
             if not diff.is_empty():
                 self.diffs.append(diff)
 
+    @property
     def is_empty(self):
         return len(self.diffs) == 0
 

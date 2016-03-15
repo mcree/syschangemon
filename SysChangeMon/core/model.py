@@ -136,18 +136,77 @@ class Session(dict):
             self._model.sessions.delete(uuid=self['uuid'])
 
 
+class Report(dict):
+    @staticmethod
+    def from_dict(model, d: dict):
+        res = Report(model)
+        for k, v in d.items():
+            res[k] = v
+        return res
+
+    def __init__(self, model, uuid=None, stamp=None, **kwargs):
+        for k, v in kwargs.items():
+            self[k] = v
+        self._model = model
+        if uuid is None:
+            uuid = str(uuid4())
+        if stamp is None:
+            stamp = datetime.now(tz=get_localzone())
+        self['uuid'] = uuid
+        self['stamp'] = stamp
+
+    def save(self):
+        return self._model.reports.upsert(columns=['uuid'], **self)
+
+    def delete(self):
+        with self._model.transaction():
+            self._model.reports.delete(uuid=self['uuid'])
+
+
 class Model:
     def __init__(self, db_uri="sqlite:///:memory:"):
         self.db = MyDataSet(db_uri)
         self.sessions = self.db['sessions']
         self.states = self.db['states']
+        self.reports = self.db['reports']
 
     def new_session(self, **kwargs) -> Session:
         return Session(self, **kwargs)
 
+    def new_report(self, **kwargs) -> Report:
+        return Report(self, **kwargs)
+
     def last_closed_session(self) -> Session:
         uuid = self.query('select uuid from sessions where closed=1 order by stamp desc').fetchone()
         return Session.from_dict(self, self.sessions.find_one(uuid=uuid))
+
+    def last_report(self) -> Report:
+        uuid = self.query('select uuid from reports order by stamp desc').fetchone()
+        return Report.from_dict(self, self.reports.find_one(uuid=uuid))
+
+    def recent_closed_sessions(self, count: int):
+        uuids = self.query('select uuid from sessions where closed=1 order by stamp desc').fetchall()
+        cnt = 0
+        res = []
+        for uuid in uuids:
+            if cnt < int(count):
+                res.append(Session.from_dict(self, self.sessions.find_one(uuid=uuid)))
+            else:
+                break
+            cnt += 1
+        return res
+
+    def recent_reports(self, count: int):
+        uuids = self.query('select uuid from reports order by stamp desc').fetchall()
+        cnt = 0
+        res = []
+        for uuid in uuids:
+            if cnt < int(count):
+                res.append(Report.from_dict(self, self.reports.find_one(uuid=uuid)))
+            else:
+                break
+            cnt += 1
+        return res
 
     def find_sessions(self, **kwargs) -> list:
         res = []
@@ -155,10 +214,17 @@ class Model:
             res.append(Session.from_dict(self, sess))
         return res
 
+    def find_reports(self, **kwargs) -> list:
+        res = []
+        for sess in self.reports.find(**kwargs):
+            res.append(Report.from_dict(self, sess))
+        return res
+
     def delete(self):
         with self.transaction():
             self.sessions.delete()
             self.states.delete()
+            self.reports.delete()
 
     def query(self, sql, params=None, commit=None):
         return self.db.query(sql, params, commit)

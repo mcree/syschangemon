@@ -5,6 +5,7 @@ from cement.core.foundation import CementApp
 from cement.core.interface import Interface, Attribute
 from cement.core.handler import CementBaseHandler
 from core.model import State
+from core.sessiondiff import SessionDiff
 
 
 class UnsupportedException(BaseException):
@@ -65,6 +66,9 @@ class StatePluginBase(CementBaseHandler):
 
     def process_state(self, state: State) -> State:
         return state
+
+    def process_diff(self, diff: SessionDiff) -> SessionDiff:
+        return diff
 
     @property
     def label(self):
