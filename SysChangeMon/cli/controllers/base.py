@@ -19,6 +19,18 @@ class SysChangeMonBaseController(CementBaseController):
                   metavar='TEXT') ),
             ]
 
+    def _setup(self, app):
+        super()._setup(app)
+
+        plugins = {}
+        for h in handler.list('state_plugin'):
+            plugin = h()
+            plugin.setup(self.app)
+            plugins[plugin.label] = plugin
+
+        self.plugins = plugins
+
+
     @expose(help="run collect session, store current system state to database")
     def collect(self):
         self.app.log.debug("Inside SysChangeMonBaseController.collect()")
@@ -30,11 +42,7 @@ class SysChangeMonBaseController(CementBaseController):
         session['start_time'] = datetime.now(tz=get_localzone())
         session.save()
 
-        plugins = {}
-        for h in handler.list('state_plugin'):
-            plugin = h()
-            plugin.setup(self.app)
-            plugins[plugin.label]=plugin
+        plugins = self.plugins
 
         urls = []
         for plugin in plugins.values():
@@ -125,6 +133,10 @@ class SysChangeMonBaseController(CementBaseController):
             return
 
         diff = SessionDiff(recent[1], recent[0])
+
+        for plugin in self.plugins.values():
+            diff = plugin.process_diff(diff)
+
         diff_dict = diff.__dict__
         diff_dict['is_empty'] = diff.is_empty
         report = self.app.render(diff_dict, 'report_txt.html', out=None)
