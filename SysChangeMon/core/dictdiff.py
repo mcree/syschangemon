@@ -17,6 +17,7 @@ class DictDiff:
 
     def __init__(self, dict1: dict, label1: str, dict2: dict, label2: str, ignore_keys=[]):
 
+        self.plus_info = {}
         self.label1 = label1
         self.label2 = label2
 
@@ -65,6 +66,9 @@ class DictDiff:
 
         #for k, v in self.both_eq.items():
         #    res += "=== %s: %s\n" % (k, str(v).replace('\n', '\n    '))
+
+        for k, v in self.both_neq_tuple.items():
+            res += "!!! %s: (-) %s != (+) %s\n" % (k, v[0], v[1])
 
         for k, v in self.both_neq_diff.items():
             res += "!!! %s: \n    %s\n" % (k, str(v).replace('\n', '\n    '))
