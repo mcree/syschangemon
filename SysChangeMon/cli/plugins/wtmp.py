@@ -1,10 +1,14 @@
-import pprint
+
 
 import utmp
+from datetime import datetime
 from cement.core.foundation import CementApp
 from cli.ext.pluginbase import StatePluginBase, StatePluginInterface
 from cement.core import handler
+from core.dictdiff import DictDiff
 from core.sessiondiff import SessionDiff
+from tzlocal.unix import get_localzone
+from utmp.reader import UTmpRecordType
 
 
 class WtmpPlugin(StatePluginBase):
@@ -15,23 +19,73 @@ class WtmpPlugin(StatePluginBase):
         label = 'wtmp'
         interface = StatePluginInterface
 
+    def __init__(self):
+        super().__init__()
+
+        self.tz = get_localzone()
+        self.wtmp_sessions = []
+
     def setup(self, app):
         super().setup(app)
 
         c = app.config
 
-        self.path = c.get(self._meta.label, 'wtmp_path')
+        path = c.get(self._meta.label, 'wtmp_path')
+        self.wtmp_sessions = self.parse_wtmp(path)
 
-    def process_diff(self, diff: SessionDiff) -> SessionDiff:
-        sess = {}
-        with open(self.path, 'rb') as fd:
+    def parse_wtmp(self, path):
+        entries = []
+        with open(path, 'rb') as fd:
             buf = fd.read()
             for entry in utmp.read(buf):
-                print(entry.time, entry.type, entry)
-                if entry.line not in sess.keys():
-                    sess[entry.line] = []
-                sess[entry.line].append(entry)
-        pprint.pprint(sess)
+                entries.append(entry)
+
+        wtmp_sessions = []
+        idx = 0
+        for entry in entries:
+            if entry.type == UTmpRecordType.user_process:
+                found = False
+                for nentry in entries[idx:]:
+                    if nentry.type == UTmpRecordType.dead_process and nentry.line == entry.line:
+                        found = True
+                    if nentry.type == UTmpRecordType.boot_time:
+                        found = True
+                    if found:
+                        wtmp_sessions.append({
+                            'user': entry.user,
+                            'host': entry.host,
+                            'line': entry.line,
+                            'start': datetime.fromtimestamp(entry.sec + entry.usec*0.000001, self.tz),
+                            'end': datetime.fromtimestamp(nentry.sec + nentry.usec*0.000001, self.tz)
+                        })
+                        break
+                if not found:
+                    wtmp_sessions.append({
+                        'user': entry.user,
+                        'host': entry.host,
+                        'line': entry.line,
+                        'start': datetime.fromtimestamp(entry.sec + entry.usec*0.000001, self.tz),
+                        'end': datetime.now(self.tz)
+                    })
+            idx += 1
+        return wtmp_sessions
+
+    def process_diff(self, diff: SessionDiff) -> SessionDiff:
+     #   pprint.pprint(wtmp_sessions)
+    #            if entry.line not in sess.keys():
+    #                sess[entry.line] = []
+    #            sess[entry.line].append(entry)
+    #    pprint.pprint(sess)
+        for d in diff.diffs:
+            assert isinstance(d, DictDiff)
+            if 'mtime' in d.both_neq_tuple.keys():
+                mtime = d.both_neq_tuple['mtime'][1]
+                for sess in self.wtmp_sessions:
+                    print(sess)
+                    if sess['start'] < mtime < sess['end']:
+                        d.plus_info.append(sess)
+                        print(sess)
+
         return diff
 
 """
