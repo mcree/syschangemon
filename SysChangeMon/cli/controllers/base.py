@@ -9,6 +9,7 @@ from peewee import OperationalError
 from tzlocal.unix import get_localzone
 from datetime import datetime
 
+
 class SysChangeMonBaseController(CementBaseController):
     class Meta:
         label = 'base'
@@ -29,7 +30,6 @@ class SysChangeMonBaseController(CementBaseController):
             plugins[plugin.label] = plugin
 
         self.plugins = plugins
-
 
     @expose(help="run collect session, store current system state to database")
     def collect(self):
@@ -155,9 +155,12 @@ class SysChangeMonBaseController(CementBaseController):
         db = self.app.storage.db
         assert isinstance(db, Model)
 
-        report = db.last_report()
-        #print(report['is_empty'])
-        print(report['text'])
+        try:
+            report = db.last_report()
+            #print(report['is_empty'])
+            print(report['text'])
+        except OperationalError:
+            print('no recent report')
 
         self.app.exit_code = 0
         return

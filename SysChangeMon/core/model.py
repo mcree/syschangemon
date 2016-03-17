@@ -1,20 +1,30 @@
 """ System Change Data Model Classes """
+import pprint
+import re
 from datetime import datetime, date
+from time import strptime, strftime
 from urllib.parse import urlparse
 from uuid import uuid4
 from decimal import Decimal
-from peewee import BlobField, OperationalError
+
+import sys
+
+import parsedatetime
+from dateutil.parser import *
+from peewee import BlobField, OperationalError, Field
 from playhouse.dataset import DataSet
 from playhouse.dataset import Table
 from tzlocal.unix import get_localzone
 
 
 class MyDataSet(DataSet):
+
     def __getitem__(self, table):
         return MyTable(self, table, self._models.get(table))
 
 
 class MyTable(Table):
+
     def _guess_field_type(self, value):
         #print(type(value))
         if isinstance(value, bytes):
@@ -53,6 +63,13 @@ class State(dict):
     def from_dict(model, d: dict):
         res = State(model, None)
         for k, v in d.items():
+            try:
+                # hack string timestamps back to datetime
+                if isinstance(v, str):
+                    if re.match('[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}', v):
+                        v = parse(v, yearfirst=True, dayfirst=False, fuzzy=True)
+            except ValueError:
+                pass
             res[k] = v
         return res
 
@@ -84,6 +101,7 @@ class State(dict):
             res += " "
         res += '}'
         return res
+
 
 class Session(dict):
 

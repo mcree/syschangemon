@@ -1,4 +1,4 @@
-
+from time import strftime
 
 import utmp
 from datetime import datetime
@@ -71,91 +71,24 @@ class WtmpPlugin(StatePluginBase):
         return wtmp_sessions
 
     def process_diff(self, diff: SessionDiff) -> SessionDiff:
-     #   pprint.pprint(wtmp_sessions)
-    #            if entry.line not in sess.keys():
-    #                sess[entry.line] = []
-    #            sess[entry.line].append(entry)
-    #    pprint.pprint(sess)
         for d in diff.diffs:
             assert isinstance(d, DictDiff)
             if 'mtime' in d.both_neq_tuple.keys():
                 mtime = d.both_neq_tuple['mtime'][1]
+                print(type(mtime))
+                res = ""
                 for sess in self.wtmp_sessions:
                     print(sess)
                     if sess['start'] < mtime < sess['end']:
-                        d.plus_info.append(sess)
-                        print(sess)
-
+                        res += sess['user'] + " " + \
+                               sess['line'] + "@" + \
+                               sess['host'] + " " + \
+                               strftime("%Y-%m-%d %H:%M:%S %Z", sess['start'].timetuple()) + " - " + \
+                               strftime("%Y-%m-%d %H:%M:%S %Z", sess['end'].timetuple()) + "\n"
+                if len(res) > 0:
+                    d.plus_info['mtime_wtmp'] = res
         return diff
 
-"""
-
-excerpt from last.c:
-                case BOOT_TIME:
-                        strcpy(ut.ut_line, "system boot");
-                        quit = list(&ut, lastdown, R_REBOOT);
-                        lastboot = ut.ut_time;
-                        down = 1;
-                        break;
-
-                case USER_PROCESS:
-                        /*
-                         *      This was a login - show the first matching
-                         *      logout record and delete all records with
-                         *      the same ut_line.
-                         */
-                        c = 0;
-                        for (p = utmplist; p; p = next) {
-                                next = p->next;
-                                if (strncmp(p->ut.ut_line, ut.ut_line,
-                                    UT_LINESIZE) == 0) {
-                                        /* Show it */
-                                        if (c == 0) {
-                                                quit = list(&ut, p->ut.ut_time,
-                                                        R_NORMAL);
-                                                c = 1;
-                                        }
-                                        if (p->next) p->next->prev = p->prev;
-                                        if (p->prev)
-                                                p->prev->next = p->next;
-                                        else
-                                                utmplist = p->next;
-                                        free(p);
-                                }
-                        }
-                        /*
-                         *      Not found? Then crashed, down, still
-                         *      logged in, or missing logout record.
-                         */
-                        if (c == 0) {
-                                if (lastboot == 0) {
-                                        c = R_NOW;
-                                        /* Is process still alive? */
-                                        if (ut.ut_pid > 0 &&
-                                            kill(ut.ut_pid, 0) != 0 &&
-                                            errno == ESRCH)
-                                                c = R_PHANTOM;
-                                } else
-                                        c = whydown;
-                                quit = list(&ut, lastboot, c);
-                        }
-                        /* FALLTHRU */
-        /*
-         *      If we saw a shutdown/reboot record we can remove
-         *      the entire current utmplist.
-         */
-        if (down) {
-                lastboot = ut.ut_time;
-                whydown = (ut.ut_type == SHUTDOWN_TIME) ? R_DOWN : R_CRASH;
-                for (p = utmplist; p; p = next) {
-                        next = p->next;
-                        free(p);
-                }
-                utmplist = NULL;
-                down = 0;
-        }
-
-"""
 
 def load(app: CementApp):
     handler.register(WtmpPlugin)

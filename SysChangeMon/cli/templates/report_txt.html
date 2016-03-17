@@ -31,5 +31,8 @@
 {{ tr("diff of "~k, v, cols=cols2) }}
 {%- endfor %}
 {{ hr(cols=cols) }}
+{%- for k, v in diff.plus_info.items() %}
+{{ tr(k, v, cols=cols2) }}
+{%- endfor %}
 {%- endfor %}
 {%- endif %}
