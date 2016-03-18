@@ -1,4 +1,7 @@
 """syschangemon base controller."""
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from cement.core.controller import CementBaseController, expose
 from cement.core import handler, hook
@@ -144,6 +147,7 @@ class SysChangeMonBaseController(CementBaseController):
 
         dbrep = db.new_report()
         dbrep['text'] = report
+        dbrep['html'] = "<html><body><pre>"+report+"</pre></body></html>"
         dbrep['is_empty'] = diff.is_empty
         dbrep.save()
 
@@ -165,6 +169,62 @@ class SysChangeMonBaseController(CementBaseController):
         self.app.exit_code = 0
         return
 
+    @expose(help='email last report from database')
+    def email_report(self):
+        db = self.app.storage.db
+        assert isinstance(db, Model)
+
+        try:
+            report = db.last_report()
+            #print(report['is_empty'])
+            #print(report['text'])
+
+            params = dict()
+
+            for item in ['from', 'to_addr', 'from_addr', 'cc', 'bcc', 'subject',
+                         'ssl', 'tls', 'host', 'port', 'auth', 'username',
+                            'password', 'timeout', 'subject_prefix']:
+                params[item] = self.app.config.get('mail.smtp', item)
+
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = str(params['subject'])
+            msg['From'] = str(params['from'])
+            msg['To'] = str(params['to_addr'])
+
+            part1 = MIMEText(str(report['text']), 'plain')
+            part2 = MIMEText(str(report['html']), 'html')
+
+            msg.attach(part1)
+            msg.attach(part2)
+
+            if params['ssl'] == '1':
+                server = smtplib.SMTP_SSL(params['host'], params['port'],
+                                          params['timeout'])
+                self.app.log.debug("initiating ssl")
+                if params['tls'] == '1':
+                    self.app.log.debug("initiating tls")
+                    server.starttls()
+
+            else:
+                server = smtplib.SMTP(params['host'], params['port'],
+                                      params['timeout'])
+
+            if params['auth'] == '1':
+                server.login(params['username'], params['password'])
+
+            if self.app.debug is True:
+                server.set_debuglevel(9)
+
+            #print(msg.as_string())
+
+            server.send_message(msg)
+
+        except OperationalError:
+            print('no recent report')
+
+        self.app.exit_code = 0
+        return
+
     @expose(hide=True, help='collect, diff, cleanup, print_report')
     def default(self):
         self.app.log.debug("Inside SysChangeMonBaseController.default()")
@@ -173,6 +233,7 @@ class SysChangeMonBaseController(CementBaseController):
         self.diff()
         self.cleanup()
         self.print_report()
+        self.email_report()
 
         self.app.exit_code = 0
         return
