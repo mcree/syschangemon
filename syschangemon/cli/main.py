@@ -4,6 +4,7 @@ import traceback
 from cement.core import hook
 from cement.core.foundation import CementApp
 from cement.ext.ext_configparser import ConfigParserConfigHandler
+from cement.ext.ext_dummy import DummyOutputHandler
 from cement.ext.ext_logging import LoggingLogHandler
 from cement.utils.misc import init_defaults
 from cement.core.exc import FrameworkError, CaughtSignal
@@ -82,8 +83,8 @@ class SysChangeMonTestApp(SysChangeMonApp):
         argv = ['--debug']
 
         # don't look for config files (could break tests)
-        #config_files = []
-        #plugin_config_dir = ['/home/mcree/PycharmProjects/syschangemon/config/plugins.d']
+        config_files = []
+        plugin_config_dir = ['']
 
         # plugins enabled for testing
         #plugins = ['file']

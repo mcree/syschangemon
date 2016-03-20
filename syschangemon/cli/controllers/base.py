@@ -4,7 +4,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from cement.core.controller import CementBaseController, expose
-from cement.core import handler, hook
+from cement.core import hook
 from syschangemon.cli.ext.pluginbase import UnsupportedException
 from syschangemon.core.model import Model
 from syschangemon.core.sessiondiff import SessionDiff
@@ -27,7 +27,7 @@ class SysChangeMonBaseController(CementBaseController):
         super()._setup(app)
 
         plugins = {}
-        for h in handler.list('state_plugin'):
+        for h in app.handler.list('state_plugin'):
             plugin = h()
             plugin.setup(self.app)
             plugins[plugin.label] = plugin

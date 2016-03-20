@@ -3,6 +3,7 @@
 from syschangemon.cli.main import SysChangeMonTestApp
 from cement.utils.test import *
 
+
 class SysChangeMonTestCase(CementTestCase):
     app_class = SysChangeMonTestApp
 
