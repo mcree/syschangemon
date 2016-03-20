@@ -114,4 +114,6 @@ class JinjaOutputHandler(TemplateOutputHandler):
         jt = self.env.get_template(template)
         return jt.render(data_dict, **kw)
 
-
+    def render_from_string(self, source, data_dict, gglobals=None, template_class=None, **kw):
+        jt = self.env.from_string(source, globals=gglobals, template_class=template_class)
+        return jt.render(data_dict, **kw)

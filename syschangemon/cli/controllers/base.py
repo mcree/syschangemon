@@ -6,6 +6,7 @@ from email.mime.text import MIMEText
 from cement.core.controller import CementBaseController, expose
 from cement.core import hook
 from syschangemon.cli.ext.pluginbase import UnsupportedException
+from syschangemon.core.jinjaoutput import JinjaOutputHandler
 from syschangemon.core.model import Model
 from syschangemon.core.sessiondiff import SessionDiff
 from peewee import OperationalError
@@ -186,8 +187,12 @@ class SysChangeMonBaseController(CementBaseController):
                             'password', 'timeout', 'subject_prefix']:
                 params[item] = self.app.config.get('mail.smtp', item)
 
+            outh = JinjaOutputHandler()
+            outh._setup(self.app)
+            subj = outh.render_from_string(str(params['subject']), report)
+
             msg = MIMEMultipart('alternative')
-            msg['Subject'] = str(params['subject'])
+            msg['Subject'] = subj
             msg['From'] = str(params['from'])
             msg['To'] = str(params['to_addr'])
 

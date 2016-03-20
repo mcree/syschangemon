@@ -76,6 +76,12 @@ class SysChangeMonApp(CementApp):
         output_handler = JinjaOutputHandler
 
 
+class TestConfigHandler(ConfigParserConfigHandler):
+    def __init__(self, *args, **kw):
+        super().__init__(strict=False)
+        self._strict = False
+
+
 class SysChangeMonTestApp(SysChangeMonApp):
     """A test app that is better suited for testing."""
     class Meta:
@@ -85,6 +91,8 @@ class SysChangeMonTestApp(SysChangeMonApp):
         # don't look for config files (could break tests)
         config_files = []
         plugin_config_dir = ['']
+        config_defaults = {}
+        config_handler = TestConfigHandler
 
         # plugins enabled for testing
         #plugins = ['file']

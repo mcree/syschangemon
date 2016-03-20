@@ -12,3 +12,4 @@ pytz>=2016.1
 tzlocal>=1.2.2
 utmp>=0.4
 parsedatetime>=2.1
+MiniMock>=1.2.8
