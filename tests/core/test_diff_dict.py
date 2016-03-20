@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from core import dictdiff
+from syschangemon.core import dictdiff
 
 
 class TestDiffDict(TestCase):

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from core.model import Model, Session, State
+from syschangemon.core.model import Model, Session, State
 
 
 class TestModel(TestCase):
@@ -13,8 +13,8 @@ class TestModel(TestCase):
     def test_last_session(self):
         print('begin test_last_session')
         self.model.delete()
-        self.model.new_session(uuid='a', custom_a='val_a').save()
-        b = self.model.new_session(uuid='b')
+        self.model.new_session(uuid='a', custom_a='val_a', closed=1).save()
+        b = self.model.new_session(uuid='b', closed=1)
         b['custom_b'] = 'val_b'
         b.save()
         c = self.model.last_closed_session()

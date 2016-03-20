@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-setup(name='SysChangeMon',
+setup(name='syschangemon',
     version='1.0',
     description="System change monitor",
     long_description="System change monitor",
@@ -17,18 +17,28 @@ setup(name='SysChangeMon',
     zip_safe=False,
     test_suite='nose.collector',
     install_requires=[
-        ### Required to build documentation
-        # "Sphinx >= 1.0",
         ### Required for testing
-        # "nose",
-        # "coverage",
+        'nose >= 1.3.0',
+        'coverage',
         ### Required to function
-        'cement',
+        'cement >= 2.8.0',
+        'globre >= 0.1.3',
+        'pony >= 0.6.4',
+        'peewee >= 2.8.0',
+        'binaryornot >= 0.4.0',
+        'partialhash >= 1.1.3',
+        'diff_match_patch >= 20121119',
+        'jinja2 >= 2.8',
+        'python-dateutil >= 2.5.0',
+        'pytz >= 2016.1',
+        'tzlocal >= 1.2.2',
+        'utmp >= 0.4',
+        'parsedatetime >= 2.1',
         ],
     setup_requires=[],
     entry_points="""
         [console_scripts]
-        syschangemon = SysChangeMon.cli.main:main
+        syschangemon = syschangemon.cli.main:main
     """,
     namespace_packages=[],
     )
