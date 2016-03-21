@@ -75,18 +75,24 @@ class WtmpPlugin(StatePluginBase):
         relevant = []
         for d in diff.diffs:
             assert isinstance(d, DictDiff)
+            ts = None
             if 'mtime' in d.both_neq_tuple.keys():
-                mtime = d.both_neq_tuple['mtime'][1]
+                ts = d.both_neq_tuple['mtime'][1]
+            if 'ctime' in d.both_neq_tuple.keys():
+                ts = d.both_neq_tuple['ctime'][1]
+            if ts is not None:
                 #print(type(mtime))
                 res = ""
                 for sess in self.wtmp_sessions:
                     #print(sess)
-                    if sess['start'] < mtime < sess['end']:
-                        relevant.append(sess['user'] + " " +
-                               sess['line'] + "@" +
-                               sess['host'] + " " +
+                    if sess['start'] < ts < sess['end']:
+                        relevant.append(
                                strftime("%Y-%m-%d %H:%M:%S %Z", sess['start'].timetuple()) + " - " +
-                               strftime("%Y-%m-%d %H:%M:%S %Z", sess['end'].timetuple()) + "\n")
+                               strftime("%Y-%m-%d %H:%M:%S %Z", sess['end'].timetuple()) + " " +
+                               sess['user'] + " " +
+                               sess['line'] + "@" +
+                               sess['host'] + "\n"
+                        )
         if len(relevant) > 0:
             res = "".join(set(relevant))
             diff.extra['relevant_wtmp'] = res
