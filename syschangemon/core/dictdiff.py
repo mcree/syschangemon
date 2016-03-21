@@ -47,8 +47,8 @@ class DictDiff:
                 if str(val1).find('\n') > 0:
                     self.both_neq_diff[key] = self._diff_text(str(val1), str(val2))
                 else:
-                    if key == 'mtime':
-                        print('dictdiff type(mtime):'+str(type(val1)))
+                    #if key == 'mtime':
+                        #print('dictdiff type(mtime):'+str(type(val1)))
                     self.both_neq_tuple[key] = (val1, val2)
 
     def is_empty(self):

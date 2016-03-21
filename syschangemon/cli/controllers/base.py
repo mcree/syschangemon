@@ -1,4 +1,5 @@
 """syschangemon base controller."""
+import pprint
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -141,6 +142,8 @@ class SysChangeMonBaseController(CementBaseController):
         for plugin in self.plugins.values():
             diff = plugin.process_diff(diff)
 
+        #pprint.pprint(diff.__dict__)
+
         diff_dict = diff.__dict__
         diff_dict['is_empty'] = diff.is_empty
         report = self.app.render(diff_dict, 'report_txt.html', out=None)
@@ -230,7 +233,7 @@ class SysChangeMonBaseController(CementBaseController):
         self.app.exit_code = 0
         return
 
-    @expose(hide=True, help='collect, diff, cleanup, print_report')
+    @expose(help='run collect, diff, cleanup, print_report, email_report in this order', aliases=['run'])
     def default(self):
         self.app.log.debug("Inside SysChangeMonBaseController.default()")
 

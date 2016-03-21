@@ -42,6 +42,7 @@ class WtmpPlugin(StatePluginBase):
 
         wtmp_sessions = []
         idx = 0
+        now = datetime.now(self.tz)
         for entry in entries:
             if entry.type == UTmpRecordType.user_process:
                 found = False
@@ -65,28 +66,30 @@ class WtmpPlugin(StatePluginBase):
                         'host': entry.host,
                         'line': entry.line,
                         'start': datetime.fromtimestamp(entry.sec + entry.usec*0.000001, self.tz),
-                        'end': datetime.now(self.tz)
+                        'end': now
                     })
             idx += 1
         return wtmp_sessions
 
     def process_diff(self, diff: SessionDiff) -> SessionDiff:
+        relevant = []
         for d in diff.diffs:
             assert isinstance(d, DictDiff)
             if 'mtime' in d.both_neq_tuple.keys():
                 mtime = d.both_neq_tuple['mtime'][1]
-                print(type(mtime))
+                #print(type(mtime))
                 res = ""
                 for sess in self.wtmp_sessions:
-                    print(sess)
+                    #print(sess)
                     if sess['start'] < mtime < sess['end']:
-                        res += sess['user'] + " " + \
-                               sess['line'] + "@" + \
-                               sess['host'] + " " + \
-                               strftime("%Y-%m-%d %H:%M:%S %Z", sess['start'].timetuple()) + " - " + \
-                               strftime("%Y-%m-%d %H:%M:%S %Z", sess['end'].timetuple()) + "\n"
-                if len(res) > 0:
-                    d.plus_info['mtime_wtmp'] = res
+                        relevant.append(sess['user'] + " " +
+                               sess['line'] + "@" +
+                               sess['host'] + " " +
+                               strftime("%Y-%m-%d %H:%M:%S %Z", sess['start'].timetuple()) + " - " +
+                               strftime("%Y-%m-%d %H:%M:%S %Z", sess['end'].timetuple()) + "\n")
+        if len(relevant) > 0:
+            res = "".join(set(relevant))
+            diff.extra['relevant_wtmp'] = res
         return diff
 
 

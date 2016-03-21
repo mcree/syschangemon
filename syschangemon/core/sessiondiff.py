@@ -22,9 +22,11 @@ class SessionDiff:
             old_label = old_state['url']
             new_state = new_session.get_state(url)
             new_label = new_state['url']
-            diff = DictDiff(old_state, old_label, new_state, new_label, ['id', 'sessionid', 'uuid'])
+            diff = DictDiff(old_state, old_label, new_state, new_label, ['id', 'sessionid', 'uuid', 'mtime', 'ctime'])
             if not diff.is_empty():
                 self.diffs.append(diff)
+
+        self.extra = {}
 
     @property
     def is_empty(self):

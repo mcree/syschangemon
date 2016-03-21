@@ -1,5 +1,5 @@
-{%- set cols=[10,50,50] %}
-{%- set cols2=[10,100] %}
+{%- set cols=[15,50,50] %}
+{%- set cols2=[15,100] %}
 {{ tr('session', old_session.stamp|strftime('%Y-%m-%d %H:%M:%S %Z (old)'), new_session.stamp|strftime('%Y-%m-%d %H:%M:%S %Z (new)'), cols=cols) }}
 {{ hr(cols=cols, char='=', separator='=+=') }}
 {%- for attr in ['uuid','start_time','end_time'] %}
@@ -8,7 +8,7 @@
 {%- if is_empty %}
 {{ hr(cols=cols) }}
 {{ tr('note', 'no difference found', cols=cols2) }}
-{%- else %}
+{%- else %}{# is_empty #}
 {%- if lost_urls|count>0 or found_urls|count>0 %}
 {{ hr(cols=cols) }}
 {{ tr('uniqe urls', lost_urls|join('\n'), found_urls|join('\n'), cols=cols) }}
@@ -30,9 +30,17 @@
 {{ hr(cols=cols) }}
 {{ tr("diff of "~k, v, cols=cols2) }}
 {%- endfor %}
+{%- if diff.plus_info|count > 0 %}
 {{ hr(cols=cols) }}
 {%- for k, v in diff.plus_info.items() %}
 {{ tr(k, v, cols=cols2) }}
 {%- endfor %}
+{%- endif %}{# plus_info #}
+{%- endfor %}{# diff in diffs #}
+{%- if extra|count > 0 %}
+{{ hr(cols=cols, char='=', separator='=+=') }}
+{%- for k, v in extra.items() %}
+{{ tr(k, v, cols=cols2) }}
 {%- endfor %}
-{%- endif %}
+{%- endif %}{# exta #}
+{%- endif %}{# is_empty #}
