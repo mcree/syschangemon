@@ -1,27 +1,93 @@
 """Filesystem Plugin for syschangemon."""
+import binascii
 import datetime
+import globre
+import grp
 import hashlib
+import os
+import pwd
+import sys
+from stat import *
 from urllib.parse import urlparse
 
-import sys
-
-import binascii
-
-import pwd
-
-import grp
-
-from cement.core import handler, hook
-from cement.core.config import IConfig
-from cement.core.controller import CementBaseController
+from cement.core import handler
 from cement.core.foundation import CementApp
-from syschangemon.cli.ext.pluginbase import StatePluginBase, StatePluginInterface, UnsupportedException
-import os, globre
-
 from partialhash import compute_from_path
-from peewee import OperationalError
-from pony.orm.core import db_session
 from tzlocal.unix import get_localzone
+
+from syschangemon.cli.ext.pluginbase import StatePluginBase, StatePluginInterface, UnsupportedException
+
+
+def st_mode_repr(mode):
+    """
+    Calculate textual representation of binary inode mode.
+
+    Sample output for regular file with mode 0644: 'u=rw-,g=r--,o=r--'
+
+    :param mode: st_mode integer returned by os.stat()
+    :return: textual representation of st_mode
+    """
+    res = ""
+    if S_ISBLK(mode):
+        res += "blk "
+    if S_ISCHR(mode):
+        res += "chr "
+    if S_ISDIR(mode):
+        res += "dir "
+    if S_ISFIFO(mode):
+        res += "fifo "
+    if S_ISLNK(mode):
+        res += "sym "
+    if S_ISSOCK(mode):
+        res += "sock "
+    if mode | S_ISUID == mode:
+        res += "setuid "
+    if mode | S_ISGID == mode:
+        res += "setgid "
+    if mode | S_ISVTX == mode:
+        res += "sticky "
+    res += "u="
+    if mode | S_IRUSR == mode:
+        res += "r"
+    else:
+        res += "-"
+    if mode | S_IWUSR == mode:
+        res += "w"
+    else:
+        res += "-"
+    if mode | S_IXUSR == mode:
+        res += "x"
+    else:
+        res += "-"
+    res += ",g="
+    if mode | S_IRGRP == mode:
+        res += "r"
+    else:
+        res += "-"
+    if mode | S_IWGRP == mode:
+        res += "w"
+    else:
+        res += "-"
+    if mode | S_IXGRP == mode:
+        res += "x"
+    else:
+        res += "-"
+    res += ",o="
+    if mode | S_IROTH == mode:
+        res += "r"
+    else:
+        res += "-"
+    if mode | S_IWOTH == mode:
+        res += "w"
+    else:
+        res += "-"
+    if mode | S_IXOTH == mode:
+        res += "x"
+    else:
+        res += "-"
+
+    return res
+
 
 
 class FilePlugin(StatePluginBase):
@@ -171,11 +237,15 @@ class FilePlugin(StatePluginBase):
             res['size'] = stat.st_size
             res['ctime'] = datetime.datetime.fromtimestamp(stat.st_ctime, tz=self.tz)
             res['mtime'] = datetime.datetime.fromtimestamp(stat.st_mtime, tz=self.tz)
-            res['mode'] = stat.st_mode
-            res['uid'] = stat.st_uid
-            res['gid'] = stat.st_gid
-            res['uid_name'] = pwd.getpwuid(stat.st_uid).pw_name
-            res['gid_name'] = grp.getgrgid(stat.st_gid).gr_name
+            res['mode'] = st_mode_repr(stat.st_mode)
+            res['uid'] = str(stat.st_uid)
+            res['gid'] = str(stat.st_gid)
+            uidname = pwd.getpwuid(stat.st_uid).pw_name
+            if uidname is not None and len(uidname) > 0:
+                res['uid'] = res['uid'] + " (" + uidname + ")"
+            gidname = grp.getgrgid(stat.st_gid).gr_name
+            if gidname is not None and len(gidname) > 0:
+                res['gid'] = res['gid'] + " (" + gidname + ")"
         except:
             e = sys.exc_info()[1]
             res['stat_error'] = e
@@ -190,7 +260,7 @@ class FilePlugin(StatePluginBase):
 
         try:
             digest = compute_from_path(path, hash_algorithm=hashlib.sha256)
-            res['hash'] = binascii.hexlify(digest)
+            res['hash'] = str(binascii.hexlify(digest))
         except:
             e = sys.exc_info()[1]
             res['hash_error'] = e
