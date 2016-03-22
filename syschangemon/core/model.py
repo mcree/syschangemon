@@ -112,6 +112,16 @@ class Session(dict):
     def from_dict(model, d: dict):
         res = Session(model)
         for k, v in d.items():
+            try:
+                # hack string timestamps back to datetime
+                if isinstance(v, str):
+                    if re.match('[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}', v):
+                        v = parse(v, yearfirst=True, dayfirst=False, fuzzy=True)
+                # hack bytes back to utf8 strings
+                if isinstance(v, bytes) or isinstance(v, bytearray):
+                    v = v.decode('utf-8')
+            except ValueError:
+                pass
             res[k] = v
         return res
 
