@@ -30,7 +30,7 @@ class SessionDiff:
 
     @property
     def is_empty(self):
-        return len(self.diffs) == 0
+        return len(self.diffs) == 0 and len(self.lost_urls) == 0 and len(self.found_urls) == 0
 
     def __repr__(self):
         res = ""
