@@ -68,6 +68,9 @@ class State(dict):
                 if isinstance(v, str):
                     if re.match('[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}', v):
                         v = parse(v, yearfirst=True, dayfirst=False, fuzzy=True)
+                # hack bytes back to utf8 strings
+                if isinstance(v, bytes) or isinstance(v, bytearray):
+                    v = v.decode('utf-8')
             except ValueError:
                 pass
             res[k] = v
