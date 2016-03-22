@@ -51,13 +51,13 @@
 {%- endfor %}
 {%- endif %}{# plus_info|count > 0 #}
 {%- endfor %}{# diff in diffs #}
+{%- if is_empty %}
+{{ hr(cols=cols) }}
+{{ tr('note', 'no difference', cols=cols2) }}
+{%- endif %}
 {%- if extra|count > 0 %}
 {{ hr(cols=cols, char='=', separator='=+=') }}
 {%- for k, v in extra.items() %}
 {{ tr(k, v, cols=cols2) }}
 {%- endfor %}
 {%- endif %}{# exta|count > 0 #}
-{%- if is_empty %}
-{{ hr(cols=cols) }}
-{{ tr('note', 'no difference', cols=cols2) }}
-{%- endif %}
