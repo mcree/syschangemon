@@ -71,8 +71,27 @@ class WtmpPlugin(StatePluginBase):
             idx += 1
         return wtmp_sessions
 
+    @staticmethod
+    def wtmp_sess_repr(sess):
+        return strftime("%Y-%m-%d %H:%M:%S %Z", sess['start'].timetuple()) + " - " + \
+            strftime("%Y-%m-%d %H:%M:%S %Z", sess['end'].timetuple()) + " " + \
+            sess['user'] + " " + \
+            sess['line'] + "@" + \
+            sess['host'] + "\n"
+
     def process_diff(self, diff: SessionDiff) -> SessionDiff:
+
         relevant = []
+
+        oldstamp = diff.old_session['stamp']
+        newstamp = diff.new_session['stamp']
+        for sess in self.wtmp_sessions:
+            if sess['start'] < oldstamp < sess['end'] or \
+                                    sess['start'] < newstamp < sess['end'] or \
+                                    oldstamp < sess['start'] < newstamp or \
+                                    oldstamp < sess['end'] < newstamp:
+                relevant.append(self.wtmp_sess_repr(sess))
+
         for d in diff.diffs:
             assert isinstance(d, DictDiff)
             ts = None
@@ -86,16 +105,12 @@ class WtmpPlugin(StatePluginBase):
                 for sess in self.wtmp_sessions:
                     #print(sess)
                     if sess['start'] < ts < sess['end']:
-                        relevant.append(
-                               strftime("%Y-%m-%d %H:%M:%S %Z", sess['start'].timetuple()) + " - " +
-                               strftime("%Y-%m-%d %H:%M:%S %Z", sess['end'].timetuple()) + " " +
-                               sess['user'] + " " +
-                               sess['line'] + "@" +
-                               sess['host'] + "\n"
-                        )
+                        relevant.append(self.wtmp_sess_repr(sess))
+
         if len(relevant) > 0:
-            res = "".join(set(relevant))
+            res = "".join(sorted(set(relevant)))
             diff.extra['relevant_wtmp'] = res
+
         return diff
 
 
