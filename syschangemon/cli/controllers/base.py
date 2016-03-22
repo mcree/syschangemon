@@ -1,5 +1,4 @@
 """syschangemon base controller."""
-import pprint
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -20,9 +19,16 @@ class SysChangeMonBaseController(CementBaseController):
         label = 'base'
         description = 'System change monitor'
         arguments = [
-            (['-f', '--foo'],
-             dict(help='the notorious foo option', dest='foo', action='store',
-                  metavar='TEXT') ),
+            (['-s', '--skip-empty-mail'],
+             dict(help='skip email sending if report contains no differences', dest='skip_empty_mail', action='store_true')),
+            (['-t', '--html'],
+             dict(help='prefer HTML output when possible', dest='prefer_html', action='store_true')),
+            (['-r', '--report-uuid'],
+             dict(help='choose report by uuid (instead of most recent)', dest='report_uuid', metavar='UUID', action='store')),
+            (['-o', '--old-session-uuid'],
+             dict(help='choose old session by uuid (instead of second most recent)', dest='old_session_uuid', metavar='UUID', action='store')),
+            (['-u', '--session-uuid'],
+             dict(help='choose session by uuid (instead of most recent)', dest='session_uuid', metavar='UUID', action='store')),
             ]
 
     def _setup(self, app):
@@ -35,6 +41,78 @@ class SysChangeMonBaseController(CementBaseController):
             plugins[plugin.label] = plugin
 
         self.plugins = plugins
+
+    @expose(help='export system state stored in session as CSV (default: most recent session)')
+    def export(self):
+        self.app.log.debug("Inside SysChangeMonBaseController.export()")
+
+        db = self.app.storage.db
+        assert isinstance(db, Model)
+
+        recent = db.recent_closed_sessions(1)
+        if len(recent) != 1:
+            print("no previous state - exiting without export")
+            self.app.exit_code = 1
+            return
+
+        sess = None
+
+        if self.app.pargs.session_uuid is not None:
+            new = db.find_sessions(uuid=self.app.pargs.session_uuid)
+            if len(new) > 0:
+                sess = new[0]
+
+        if sess is None:
+            sess = recent[0]
+
+        q = db.states.find(sessionid=sess['uuid'])
+        db.db.freeze(q, format='csv', filename='/dev/stdout')
+
+        self.app.exit_code = 0
+        return
+
+
+    @expose(help="list sessions stored in database")
+    def list_sessions(self):
+        self.app.log.debug("Inside SysChangeMonBaseController.list_sessions()")
+        db = self.app.storage.db
+        assert isinstance(db, Model)
+
+        for sess in db.find_sessions():
+            print(sess['uuid']+" "+str(sess['stamp']))
+
+        self.app.exit_code = 0
+        return
+
+    @expose(help="list reports stored in database")
+    def list_reports(self):
+        self.app.log.debug("Inside SysChangeMonBaseController.list_reports()")
+        db = self.app.storage.db
+        assert isinstance(db, Model)
+
+        for report in db.find_reports():
+            print(report['uuid']+" "+str(report['stamp']))
+
+        self.app.exit_code = 0
+        return
+
+    @expose(help="reset database - drop all sessions then run initial collect phase")
+    def reset(self):
+        self.app.log.debug("Inside SysChangeMonBaseController.reset()")
+        db = self.app.storage.db
+        assert isinstance(db, Model)
+
+        for sess in db.find_sessions():
+            sess.delete()
+
+        self.collect()
+
+        print('database reset done, new session collected:')
+
+        self.list_sessions()
+
+        self.app.exit_code = 0
+        return
 
     @expose(help="run collect session, store current system state to database")
     def collect(self):
@@ -83,10 +161,13 @@ class SysChangeMonBaseController(CementBaseController):
         session['closed'] = True
         session['end_time'] = datetime.now(tz=get_localzone())
         session.save()
+
+        print("session " + session['uuid'] + " saved")
+
         self.app.exit_code = 0
         return
 
-    @expose(help="clean up database, expunge old sessions")
+    @expose(help="clean up database, expunge old sessions and reports")
     def cleanup(self):
         self.app.log.debug("Inside SysChangeMonBaseController.cleanup()")
 
@@ -124,7 +205,7 @@ class SysChangeMonBaseController(CementBaseController):
         self.app.exit_code = 0
         return
 
-    @expose(help='diff last two sessions and save report in database')
+    @expose(help='diff two sessions and save report in database (default: most recent sessions)')
     def diff(self):
         self.app.log.debug("Inside SysChangeMonBaseController.diff()")
 
@@ -137,7 +218,26 @@ class SysChangeMonBaseController(CementBaseController):
             self.app.exit_code = 1
             return
 
-        diff = SessionDiff(recent[1], recent[0])
+        new_sess = None
+        old_sess = None
+
+        if self.app.pargs.old_session_uuid is not None:
+            old = db.find_sessions(uuid=self.app.pargs.old_session_uuid)
+            if len(old) > 0:
+                new_sess = old[0]
+
+        if self.app.pargs.session_uuid is not None:
+            new = db.find_sessions(uuid=self.app.pargs.session_uuid)
+            if len(new) > 0:
+                new_sess = new[0]
+
+        if old_sess is None:
+            old_sess = recent[1]
+
+        if new_sess is None:
+            new_sess = recent[0]
+
+        diff = SessionDiff(old_sess, new_sess)
 
         for plugin in self.plugins.values():
             diff = plugin.process_diff(diff)
@@ -155,31 +255,65 @@ class SysChangeMonBaseController(CementBaseController):
         dbrep['is_empty'] = diff.is_empty
         dbrep.save()
 
+        print('report ' + dbrep['uuid'] + " saved")
+
         self.app.exit_code = 0
         return
 
-    @expose(help='print last report from database')
+    @expose(help='print report from database (default: last report)')
     def print_report(self):
         db = self.app.storage.db
         assert isinstance(db, Model)
 
         try:
-            report = db.last_report()
-            #print(report['is_empty'])
-            print(report['text'])
+            report = None
+            if self.app.pargs.report_uuid is not None:
+                reports = db.find_reports(uuid=self.app.pargs.report_uuid)
+                if len(reports) > 0:
+                    report = reports[0]
+                else:
+                    print('no report found')
+                    self.app.exit_code = 2
+                    return
+
+            # default
+            if report is None:
+                report = db.last_report()
+
+            if self.app.pargs.prefer_html:
+                print(report['html'])
+            else:
+                print(report['text'])
         except OperationalError:
-            print('no recent report')
+            print('no report found')
+            self.app.exit_code = 2
 
         self.app.exit_code = 0
         return
 
-    @expose(help='email last report from database')
+    @expose(help='email report from database (default: last report)')
     def email_report(self):
         db = self.app.storage.db
         assert isinstance(db, Model)
 
         try:
-            report = db.last_report()
+            report = None
+            if self.app.pargs is not None and self.app.pargs.report_uuid is not None:
+                reports = db.find_reports(uuid=self.app.pargs.report_uuid)
+                if len(reports) > 0:
+                    report = reports[0]
+                else:
+                    print('no report found')
+                    self.app.exit_code = 2
+                    return
+
+            # default
+            if report is None:
+                report = db.last_report()
+
+            if report['is_empty'] and self.app.pargs.skip_empty_mail:
+                print("skipping email sending because report is empty")
+                return
             #print(report['is_empty'])
             #print(report['text'])
 
@@ -227,13 +361,15 @@ class SysChangeMonBaseController(CementBaseController):
 
             server.send_message(msg)
 
+            print('report sent')
+
         except OperationalError:
             print('no recent report')
 
         self.app.exit_code = 0
         return
 
-    @expose(help='run collect, diff, cleanup, print_report, email_report in this order', aliases=['run'])
+    @expose(help='run collect, diff, cleanup, print-report, email-report in this order', aliases=['run'])
     def default(self):
         self.app.log.debug("Inside SysChangeMonBaseController.default()")
 

@@ -1,6 +1,7 @@
 """Testing utilities for syschangemon."""
 from cement.core import log
 from cement.core.log import CementLogHandler
+from cement.ext.ext_argparse import ArgParseArgumentHandler, ArgparseArgumentHandler
 from cement.ext.ext_configparser import ConfigParserConfigHandler
 
 from syschangemon.cli.main import SysChangeMonTestApp, TestConfigHandler
