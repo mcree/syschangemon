@@ -5,17 +5,31 @@
 {%- for attr in ['uuid','start_time','end_time'] %}
 {{ tr(attr, old_session[attr], new_session[attr], cols=cols) }}
 {%- endfor %}
-{%- if is_empty %}
+{%- for url in lost_urls %}
 {{ hr(cols=cols) }}
-{{ tr('note', 'no difference found', cols=cols2) }}
-{%- else %}{# is_empty #}
-{%- if lost_urls|count>0 or found_urls|count>0 %}
+{{ tr('lost old item', url, '', cols=cols) }}
 {{ hr(cols=cols) }}
-{{ tr('uniqe urls', lost_urls|join('\n'), found_urls|join('\n'), cols=cols) }}
+{%- set state = old_session.get_state(url) %}
+{%- for k, v in state.items() %}
+{%- if v != None and k not in ['id', 'url', 'plugin', 'sessionid'] %}
+{{ tr(k, v, '', cols=cols) }}
 {%- endif %}
+{%- endfor %}
+{%- endfor  %}{# url in lost_urls #}
+{%- for url in found_urls %}
+{{ hr(cols=cols) }}
+{{ tr('found new item', '', url, cols=cols) }}
+{{ hr(cols=cols) }}
+{%- set state = new_session.get_state(url) %}
+{%- for k, v in state.items() %}
+{%- if v != None and k not in ['id', 'url', 'plugin', 'sessionid'] %}
+{{ tr(k, '', v, cols=cols) }}
+{%- endif %}
+{%- endfor %}
+{%- endfor  %}{# url in found_urls #}
 {%- for diff in diffs %}
 {{ hr(cols=cols) }}
-{{ tr('item', diff.label1, cols=cols2) }}
+{{ tr('changed item', diff.label1, cols=cols2) }}
 {{ hr(cols=cols) }}
 {%- for ko1, vo1 in diff.only1.items() %}
 {{ tr(ko1, vo1, '', cols=cols) }}
@@ -35,12 +49,15 @@
 {%- for k, v in diff.plus_info.items() %}
 {{ tr(k, v, cols=cols2) }}
 {%- endfor %}
-{%- endif %}{# plus_info #}
+{%- endif %}{# plus_info|count > 0 #}
 {%- endfor %}{# diff in diffs #}
 {%- if extra|count > 0 %}
 {{ hr(cols=cols, char='=', separator='=+=') }}
 {%- for k, v in extra.items() %}
 {{ tr(k, v, cols=cols2) }}
 {%- endfor %}
-{%- endif %}{# exta #}
-{%- endif %}{# is_empty #}
+{%- endif %}{# exta|count > 0 #}
+{%- if is_empty %}
+{{ hr(cols=cols) }}
+{{ tr('note', 'no difference', cols=cols2) }}
+{%- endif %}
