@@ -1,8 +1,8 @@
 syschangemon - System Change Monitor
 ==============================================================================
 
-Itroduction
------------
+Introduction
+------------
 
 Periodically collects system configuration (eg. conffiles in /etc, binary files in /sbin, etc.) for changes, 
 it can even run external commands and store their stdout and stderr for change monitoring.
