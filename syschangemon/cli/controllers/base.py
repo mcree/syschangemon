@@ -1,5 +1,6 @@
 """syschangemon base controller."""
 import smtplib
+import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -158,6 +159,8 @@ class SysChangeMonBaseController(CementBaseController):
         for res in hook.run('enumerate', self.app):
             self.app.log.debug('enumerate result: %s' % res)
 
+        session['hostname'] = socket.gethostbyaddr(socket.gethostname())[0]
+        session['item_count'] = len(urls)
         session['closed'] = True
         session['end_time'] = datetime.now(tz=get_localzone())
         session.save()
@@ -246,12 +249,14 @@ class SysChangeMonBaseController(CementBaseController):
 
         diff_dict = diff.__dict__
         diff_dict['is_empty'] = diff.is_empty
-        report = self.app.render(diff_dict, 'report_txt.html', out=None)
+        report_txt = self.app.render(diff_dict, 'report_txt.html', out=None)
+        report_html = self.app.render(diff_dict, 'report_html.html', out=None)
         #print(report)
 
         dbrep = db.new_report()
-        dbrep['text'] = report
-        dbrep['html'] = "<html><body><pre>"+report+"</pre></body></html>"
+        dbrep['text'] = report_txt
+        dbrep['html'] = report_html
+        dbrep['hostname'] = new_sess['hostname']
         dbrep['is_empty'] = diff.is_empty
         dbrep.save()
 

@@ -2,7 +2,7 @@
 {%- set cols2=[15,100] %}
 {{ tr('session', old_session.stamp|strftime('%Y-%m-%d %H:%M:%S %Z (old)'), new_session.stamp|strftime('%Y-%m-%d %H:%M:%S %Z (new)'), cols=cols) }}
 {{ hr(cols=cols, char='=', separator='=+=') }}
-{%- for attr in ['uuid','start_time','end_time'] %}
+{%- for attr in ['uuid','start_time','end_time','item_count'] %}
 {{ tr(attr, old_session[attr], new_session[attr], cols=cols) }}
 {%- endfor %}
 {%- for url in lost_urls %}

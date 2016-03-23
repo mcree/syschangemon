@@ -31,17 +31,17 @@ class MyTable(Table):
             return BlobField
         return super()._guess_field_type(value)
 
-    def insert(self, **data):
-        new_keys = set(data) - set(self.model_class._meta.fields)
-        res = super().insert(**data)
-        for key in new_keys:
-            if isinstance(data[key], (str, int, date, datetime, Decimal)) or data[key] is True or data[key] is False:
-                #print("indexing %s" % key)
-                try:
-                    self.create_index([key])
-                except OperationalError:
-                    pass
-        return res
+    # def insert(self, **data):
+    #     new_keys = set(data) - set(self.model_class._meta.fields)
+    #     res = super().insert(**data)
+    #     for key in new_keys:
+    #         if isinstance(data[key], (str, int, date, datetime, Decimal)) or data[key] is True or data[key] is False:
+    #             #print("indexing %s" % key)
+    #             try:
+    #                 self.create_index([key])
+    #             except OperationalError:
+    #                 pass
+    #     return res
 
     def upsert(self, columns=None, conjunction=None, **data):
         query = {}
@@ -200,6 +200,19 @@ class Model:
         self.sessions = self.db['sessions']
         self.states = self.db['states']
         self.reports = self.db['reports']
+
+        # create indexes
+        try:
+            self.db.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_session_uuid ON sessions(uuid)')
+            self.db.query('CREATE INDEX IF NOT EXISTS idx_session_stamp ON sessions(stamp)')
+            self.db.query('CREATE INDEX IF NOT EXISTS idx_state_sessionid ON states(sessionid)')
+            self.db.query('CREATE INDEX IF NOT EXISTS idx_state_url ON states(url)')
+            self.db.query('CREATE INDEX IF NOT EXISTS idx_state_plugin ON states(plugin)')
+            self.db.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_uuid ON reports(uuid)')
+            self.db.query('CREATE INDEX IF NOT EXISTS idx_reports_stamp ON reports(stamp)')
+        except OperationalError:
+            pass
+
 
     def new_session(self, **kwargs) -> Session:
         return Session(self, **kwargs)

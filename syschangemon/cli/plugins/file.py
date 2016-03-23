@@ -1,6 +1,8 @@
 """Filesystem Plugin for syschangemon."""
 import binascii
 import datetime
+import re
+
 import globre
 import grp
 import hashlib
@@ -128,6 +130,8 @@ class FilePlugin(StatePluginBase):
         for e in l:
             item = []
             is_deep = False
+            if re.match('.*[*].*[/].*', e):
+                is_deep = True
             if e.find('**') >= 0:
                 is_deep = True
             if e.find('{') >= 0:
