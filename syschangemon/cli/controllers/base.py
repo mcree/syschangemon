@@ -14,6 +14,8 @@ from peewee import OperationalError
 from tzlocal.unix import get_localzone
 from datetime import datetime
 
+from syschangemon.core.version import SYSCHANGEMON_VERSION
+
 
 class SysChangeMonBaseController(CementBaseController):
     class Meta:
@@ -30,6 +32,8 @@ class SysChangeMonBaseController(CementBaseController):
              dict(help='choose old session by uuid (instead of second most recent)', dest='old_session_uuid', metavar='UUID', action='store')),
             (['-u', '--session-uuid'],
              dict(help='choose session by uuid (instead of most recent)', dest='session_uuid', metavar='UUID', action='store')),
+            (['-V', '--version'],
+             dict(help='show version information and exit', dest='version', action='store_true')),
             ]
 
     def _setup(self, app):
@@ -374,15 +378,29 @@ class SysChangeMonBaseController(CementBaseController):
         self.app.exit_code = 0
         return
 
-    @expose(help='run collect, diff, cleanup, print-report, email-report in this order', aliases=['run'])
-    def default(self):
-        self.app.log.debug("Inside SysChangeMonBaseController.default()")
+    @expose(help='run collect, diff, cleanup, print-report, email-report in this order')
+    def run(self):
+        self.app.log.debug("Inside SysChangeMonBaseController.run()")
 
         self.collect()
         self.diff()
         self.cleanup()
         self.print_report()
         self.email_report()
+
+        self.app.exit_code = 0
+        return
+
+
+    @expose(help='display usage information and exit', hide=True)
+    def default(self):
+        self.app.log.debug("Inside SysChangeMonBaseController.default()")
+
+        if self.app.pargs.version:
+            print('syschangemon version ' + SYSCHANGEMON_VERSION)
+            self.app.close()
+        else:
+            self.app.args.print_usage()
 
         self.app.exit_code = 0
         return
