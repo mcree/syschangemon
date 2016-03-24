@@ -12,7 +12,7 @@ from syschangemon.core.model import Model
 class Storage():
 
     def __init__(self, dir, app):
-        super().__init__()
+        super(Storage, self).__init__()
 
         try:
             os.makedirs(dir, 0o700)

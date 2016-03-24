@@ -166,7 +166,7 @@ class FilePlugin(StatePluginBase):
         return list(set(flat)), list(set(deep))
 
     def setup(self, app):
-        super().setup(app)
+        super(FilePlugin, self).setup(app)
 
         c = app.config
 

@@ -67,13 +67,13 @@ class WtmpPlugin(StatePluginBase):
         interface = StatePluginInterface
 
     def __init__(self):
-        super().__init__()
+        super(WtmpPlugin, self).__init__()
 
         self.tz = get_localzone()
         self.wtmp_sessions = []
 
     def setup(self, app):
-        super().setup(app)
+        super(WtmpPlugin, self).setup(app)
 
         c = app.config
 

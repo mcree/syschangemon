@@ -20,7 +20,7 @@ class ConffilePlugin(StatePluginBase):
         interface = StatePluginInterface
 
     def setup(self, app):
-        super().setup(app)
+        super(ConffilePlugin, self).setup(app)
 
         c = app.config
 

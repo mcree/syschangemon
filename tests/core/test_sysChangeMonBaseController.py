@@ -13,7 +13,7 @@ from syschangemon.utils import test
 class TestSysChangeMonBaseController(test.SysChangeMonTestCase):
 
     def setUp(self):
-        super().setUp()
+        super(TestSysChangeMonBaseController, self).setUp()
         self.controller = SysChangeMonBaseController()
         self.controller._setup(self.app)
         self.set_config()

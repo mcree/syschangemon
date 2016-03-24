@@ -16,7 +16,7 @@ def format3(val, *a, **kw):
     return val.format(*a, **kw)
 
 
-def _tr(*args, separator="", cols=[]):
+def _tr(separator="", cols=[], *args):
     rargs = []
     i = 0
     for arg in args:
@@ -30,7 +30,7 @@ def _tr(*args, separator="", cols=[]):
     return separator.join(rargs)
 
 
-def tr(*args, separator=" | ", cols=[], wrap=True):
+def tr(separator=" | ", cols=[], wrap=True, *args):
     if wrap:
         res = []
         wargs = []
@@ -64,7 +64,7 @@ def tr(*args, separator=" | ", cols=[], wrap=True):
         return _tr(*args, separator=separator, cols=cols)
 
 
-def hr(*args, char="-", separator="-+-", cols=[]):
+def hr(char="-", separator="-+-", cols=[], *args):
     res = []
     for col in cols:
         res.append(char * col)
@@ -99,7 +99,7 @@ class JinjaOutputHandler(TemplateOutputHandler):
         label = 'jinja2'
 
     def _setup(self, app):
-        super()._setup(app)
+        super(JinjaOutputHandler, self)._setup(app)
         self.env = Environment(loader=CementLoader(self), extensions=['jinja2.ext.do'])
         self.env.filters['format3'] = format3
         self.env.globals['tr'] = tr

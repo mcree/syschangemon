@@ -37,7 +37,7 @@ class SysChangeMonBaseController(CementBaseController):
             ]
 
     def _setup(self, app):
-        super()._setup(app)
+        super(SysChangeMonBaseController, self)._setup(app)
 
         plugins = {}
         for h in app.handler.list('state_plugin'):

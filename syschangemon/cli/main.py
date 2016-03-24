@@ -31,12 +31,12 @@ class LogHandler(LoggingLogHandler):
     def debug(self, msg, namespace=None, **kw):
         si = traceback.extract_stack(None, 2)[0]
         ns = "%s:%r" % (si[0][-25:], si[1])
-        super().debug(msg, ns, **kw)
+        super(LogHandler, self).debug(msg, ns, **kw)
 
 
 class ConfigHandler(ConfigParserConfigHandler):
     def __init__(self, *args, **kw):
-        super().__init__(strict=False)
+        super(ConfigHandler, self).__init__(strict=False)
         self._strict = False
         #print('in custom ConfigHandler')
 
@@ -78,7 +78,7 @@ class SysChangeMonApp(CementApp):
 
 class TestConfigHandler(ConfigParserConfigHandler):
     def __init__(self, *args, **kw):
-        super().__init__(strict=False)
+        super(TestConfigHandler, self).__init__(strict=False)
         self._strict = False
 
 

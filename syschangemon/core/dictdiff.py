@@ -1,4 +1,8 @@
-import urllib
+try:
+    from urllib.parse import urlparse, unquote
+except ImportError:
+    from urlparse import urlparse
+    from urllib import unquote
 
 from diff_match_patch.diff_match_patch import diff_match_patch
 
@@ -13,7 +17,7 @@ class DictDiff:
         diff.diff_charsToLines(diffs, a[2])
         diff.diff_cleanupEfficiency(diffs)
         patch = diff.patch_make(diffs)
-        return urllib.parse.unquote(diff.patch_toText(patch).replace('%0A', ''))
+        return unquote(diff.patch_toText(patch).replace('%0A', ''))
 
     def __init__(self, dict1, label1, dict2, label2, ignore_keys=[]):
 

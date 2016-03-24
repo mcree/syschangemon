@@ -24,7 +24,7 @@ class SysInfoPlugin(StatePluginBase):
         interface = StatePluginInterface
 
     def setup(self, app):
-        super().setup(app)
+        super(SysInfoPlugin, self).setup(app)
 
         c = app.config
 

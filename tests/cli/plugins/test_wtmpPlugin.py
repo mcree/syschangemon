@@ -7,7 +7,7 @@ from syschangemon.utils import test
 class TestSysInfoPlugin(test.SysChangeMonTestCase):
 
     def setUp(self):
-        super().setUp()
+        super(TestSysInfoPlugin, self).setUp()
         #self.plugin = WtmpPlugin()
         #self.plugin.setup(self.app)
 

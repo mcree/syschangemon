@@ -8,7 +8,7 @@ from syschangemon.utils import test
 class TestCommandPlugin(test.SysChangeMonTestCase):
 
     def setUp(self):
-        super().setUp()
+        super(TestCommandPlugin, self).setUp()
         self.set_config()
         self.plugin = CommandPlugin()
         self.plugin.setup(self.app)

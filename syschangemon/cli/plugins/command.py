@@ -18,11 +18,11 @@ class CommandPlugin(StatePluginBase):
         interface = StatePluginInterface
 
     def __init__(self):
-        super().__init__()
+        super(CommandPlugin, self).__init__()
         self.commands = {}
 
     def setup(self, app_obj):
-        super().setup(app_obj)
+        super(CommandPlugin, self).setup(app_obj)
         c = self.app.config
         for k, v in c.get_section_dict(self.Meta.label).items():
             if str(k).startswith('command.'):

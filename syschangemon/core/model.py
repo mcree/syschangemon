@@ -34,7 +34,7 @@ class MyTable(Table):
         #print(type(value))
         if isinstance(value, bytes):
             return BlobField
-        return super()._guess_field_type(value)
+        return super(MyTable, self)._guess_field_type(value)
 
     # def insert(self, **data):
     #     new_keys = set(data) - set(self.model_class._meta.fields)
