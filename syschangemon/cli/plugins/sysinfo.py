@@ -36,14 +36,15 @@ class SysInfoPlugin(StatePluginBase):
         if purl.scheme != 'sysinfo':
             raise UnsupportedException
         res = {}
+        (system, node, release, version, machine, processor) = platform.uname()
         res['platform'] = platform.platform()
         res['hostname'] = socket.gethostbyaddr(socket.gethostname())[0]
-        res['system'] = platform.uname().system
-        res['version'] = platform.uname().version
-        res['node'] = platform.uname().node
-        res['release'] = platform.uname().release
-        res['machine'] = platform.uname().machine
-        res['processor'] = platform.uname().processor
+        res['system'] = system
+        res['version'] = version
+        res['node'] = node
+        res['release'] = release
+        res['machine'] = machine
+        res['processor'] = processor
         res['linux_distname'] = platform.linux_distribution()[0]
         res['linux_version'] = platform.linux_distribution()[1]
         res['linuxid'] = platform.linux_distribution()[2]
