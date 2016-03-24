@@ -7,7 +7,7 @@ Standards-Version: 3.9.5
 
 Package: syschangemon
 Architecture: all
-Pre-Depends: dpkg (>= 1.16.1), python3.4 | python3.5, ${misc:Pre-Depends}
+Pre-Depends: dpkg (>= 1.16.1), python3.4, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}
 Description: system change monitor
  Periodically collects system configuration (eg. conffiles in /etc, binary files in /sbin, etc.)
@@ -20,5 +20,3 @@ Description: system change monitor
  information in the reports.
  .
  Similar software: tripwire, samhain, fcheck, changetrack, systraq
-
-
