@@ -71,7 +71,7 @@ def hr(char="-", separator="-+-", cols=[], *args):
     return separator.join(res)
 
 
-def is_multiline(arg: str):
+def is_multiline(arg):
     return str(arg).find('\n') > 0
 
 
