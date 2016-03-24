@@ -1,6 +1,8 @@
 syschangemon - System Change Monitor
 ==============================================================================
 
+[![Build Status](https://travis-ci.org/mcree/syschangemon.svg?branch=master)](https://travis-ci.org/mcree/syschangemon)
+
 Introduction
 ------------
 
