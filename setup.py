@@ -34,6 +34,7 @@ setup(name='syschangemon',
         'tzlocal >= 1.2.2',
         'utmp >= 0.4',
         'parsedatetime >= 2.1',
+        'enum >= 1.1.2',
         ],
     setup_requires=[],
     entry_points="""
