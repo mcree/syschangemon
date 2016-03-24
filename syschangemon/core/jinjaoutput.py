@@ -16,7 +16,7 @@ def format3(val, *a, **kw):
     return val.format(*a, **kw)
 
 
-def _tr(*args, separator, cols):
+def _tr(*args, separator="", cols=[]):
     rargs = []
     i = 0
     for arg in args:

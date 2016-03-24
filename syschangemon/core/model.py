@@ -1,3 +1,5 @@
+# coding=utf-8
+
 """ System Change Data Model Classes """
 import pprint
 import re
