@@ -37,7 +37,7 @@ class ConffilePlugin(StatePluginBase):
 
         self.size_limit = int(c.get(self._meta.label, 'size_limit'))
 
-    def process_state(self, state: State) -> State:
+    def process_state(self, state):
         purl = urlparse(state['url'])
         path = purl.path
         if purl.scheme != 'file':
@@ -65,5 +65,5 @@ class ConffilePlugin(StatePluginBase):
         return state
 
 
-def load(app: CementApp):
+def load(app):
     handler.register(ConffilePlugin)

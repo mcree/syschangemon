@@ -117,7 +117,7 @@ class FilePlugin(StatePluginBase):
         return l
 
     @staticmethod
-    def _find_base_dirs(l) -> (object, object):
+    def _find_base_dirs(l):
         """
         find base dirs in include pattern list to be included in filesystem walking
 
@@ -184,7 +184,7 @@ class FilePlugin(StatePluginBase):
 
         os.stat_float_times(True)
 
-    def list_urls(self) -> list:
+    def list_urls(self):
         filelist = []
 
         # find base dirs for include
@@ -230,7 +230,7 @@ class FilePlugin(StatePluginBase):
         return filelist
 
     # noinspection PyBroadException
-    def get_state(self, url) -> dir:
+    def get_state(self, url):
         purl = urlparse(url)
         if purl.scheme != 'file':
             raise UnsupportedException
@@ -272,7 +272,7 @@ class FilePlugin(StatePluginBase):
         return res
 
 
-def load(app: CementApp):
+def load(app):
     app.log.debug('in load')
     #hook.register('enumerate', enumerate)
 

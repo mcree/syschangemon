@@ -4,7 +4,7 @@ from syschangemon.core.model import Session
 
 class SessionDiff:
 
-    def __init__(self, old_session: Session, new_session: Session):
+    def __init__(self, old_session, new_session):
 
         self.old_session = old_session
         self.new_session = new_session

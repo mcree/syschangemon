@@ -23,7 +23,6 @@ setup(name='syschangemon',
         ### Required to function
         'cement >= 2.8.0',
         'globre >= 0.1.3',
-        'pony >= 0.6.4',
         'peewee >= 2.8.0',
         'binaryornot >= 0.4.0',
         'partialhash >= 1.1.3',

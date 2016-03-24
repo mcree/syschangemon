@@ -12,7 +12,7 @@ from parsedatetime import Calendar
 LOG = minimal_logger(__name__)
 
 
-def format3(val: str, *a, **kw):
+def format3(val, *a, **kw):
     return val.format(*a, **kw)
 
 

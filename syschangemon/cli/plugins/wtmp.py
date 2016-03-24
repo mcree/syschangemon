@@ -126,7 +126,7 @@ class WtmpPlugin(StatePluginBase):
             sess['line'] + "@" + \
             sess['host'] + "\n"
 
-    def process_diff(self, diff: SessionDiff) -> SessionDiff:
+    def process_diff(self, diff):
 
         relevant = []
 
@@ -161,5 +161,5 @@ class WtmpPlugin(StatePluginBase):
         return diff
 
 
-def load(app: CementApp):
+def load(app):
     handler.register(WtmpPlugin)

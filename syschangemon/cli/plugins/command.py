@@ -28,10 +28,10 @@ class CommandPlugin(StatePluginBase):
                 url = self.Meta.label + "://" + str(k)[8:]
                 self.commands[url] = str(v)
 
-    def list_urls(self) -> list:
+    def list_urls(self):
         return list(self.commands.keys())
 
-    def get_state(self, url) -> dict:
+    def get_state(self, url):
         if url in self.commands.keys():
             res = {}
             cmd = self.commands[url]
@@ -48,5 +48,5 @@ class CommandPlugin(StatePluginBase):
             raise UnsupportedException
 
 
-def load(app: CementApp):
+def load(app):
     handler.register(CommandPlugin)

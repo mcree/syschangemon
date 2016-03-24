@@ -60,7 +60,7 @@ class MyTable(Table):
 class State(dict):
 
     @staticmethod
-    def from_dict(model, d: dict):
+    def from_dict(model, d):
         res = State(model, None)
         for k, v in d.items():
             try:
@@ -109,7 +109,7 @@ class State(dict):
 class Session(dict):
 
     @staticmethod
-    def from_dict(model, d: dict):
+    def from_dict(model, d):
         res = Session(model)
         for k, v in d.items():
             try:
@@ -140,22 +140,22 @@ class Session(dict):
     def save(self):
         return self._model.sessions.upsert(columns=['uuid'], **self)
 
-    def new_state(self, **kwargs) -> State:
+    def new_state(self, **kwargs):
         return State(self._model, self['uuid'], **kwargs)
 
-    def get_state(self, url) -> dict:
+    def get_state(self, url):
         res = self._model.states.find_one(url=url, sessionid=self['uuid'])
         if res is not None:
             return State.from_dict(self._model, res)
         else:
             raise KeyError("state with url:"+url+" for session:"+self['uuid']+" not found")
 
-    def all_urls(self) -> list:
+    def all_urls(self):
         res = self._model.query('select url from states where sessionid = ?', [self['uuid']]).fetchall()
         res = [x[0] for x in res]
         return res
 
-    def find_states(self, **kwargs) -> list:
+    def find_states(self, **kwargs):
         res = []
         for state in self._model.states.find(sessionid=self['uuid'], **kwargs):
             res.append(State.from_dict(self._model, state))
@@ -169,7 +169,7 @@ class Session(dict):
 
 class Report(dict):
     @staticmethod
-    def from_dict(model, d: dict):
+    def from_dict(model, d):
         res = Report(model)
         for k, v in d.items():
             res[k] = v
@@ -213,22 +213,21 @@ class Model:
         except OperationalError:
             pass
 
-
-    def new_session(self, **kwargs) -> Session:
+    def new_session(self, **kwargs):
         return Session(self, **kwargs)
 
-    def new_report(self, **kwargs) -> Report:
+    def new_report(self, **kwargs):
         return Report(self, **kwargs)
 
-    def last_closed_session(self) -> Session:
+    def last_closed_session(self):
         uuid = self.query('select uuid from sessions where closed=1 order by stamp desc').fetchone()
         return Session.from_dict(self, self.sessions.find_one(uuid=uuid))
 
-    def last_report(self) -> Report:
+    def last_report(self):
         uuid = self.query('select uuid from reports order by stamp desc').fetchone()
         return Report.from_dict(self, self.reports.find_one(uuid=uuid))
 
-    def recent_closed_sessions(self, count: int):
+    def recent_closed_sessions(self, count):
         uuids = self.query('select uuid from sessions where closed=1 order by stamp desc').fetchall()
         cnt = 0
         res = []
@@ -240,7 +239,7 @@ class Model:
             cnt += 1
         return res
 
-    def recent_reports(self, count: int):
+    def recent_reports(self, count):
         uuids = self.query('select uuid from reports order by stamp desc').fetchall()
         cnt = 0
         res = []
@@ -252,13 +251,13 @@ class Model:
             cnt += 1
         return res
 
-    def find_sessions(self, **kwargs) -> list:
+    def find_sessions(self, **kwargs):
         res = []
         for sess in self.sessions.find(**kwargs):
             res.append(Session.from_dict(self, sess))
         return res
 
-    def find_reports(self, **kwargs) -> list:
+    def find_reports(self, **kwargs):
         res = []
         for sess in self.reports.find(**kwargs):
             res.append(Report.from_dict(self, sess))

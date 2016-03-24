@@ -55,19 +55,19 @@ class StatePluginBase(CementBaseHandler):
         self.app = app_obj
         #print("Doing work @ _setup!")
 
-    def list_urls(self) -> list:
+    def list_urls(self):
         return []
 
-    def get_state(self, url) -> dict:
+    def get_state(self, url):
         raise UnsupportedException
 
-    def process_urls(self, urls) -> list:
+    def process_urls(self, urls):
         return urls
 
-    def process_state(self, state: State) -> State:
+    def process_state(self, state):
         return state
 
-    def process_diff(self, diff: SessionDiff) -> SessionDiff:
+    def process_diff(self, diff):
         return diff
 
     @property

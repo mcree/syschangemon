@@ -15,7 +15,7 @@ class DictDiff:
         patch = diff.patch_make(diffs)
         return urllib.parse.unquote(diff.patch_toText(patch).replace('%0A', ''))
 
-    def __init__(self, dict1: dict, label1: str, dict2: dict, label2: str, ignore_keys=[]):
+    def __init__(self, dict1, label1, dict2, label2, ignore_keys=[]):
 
         self.plus_info = {}
         self.label1 = label1

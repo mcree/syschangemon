@@ -27,11 +27,11 @@ class SysInfoPlugin(StatePluginBase):
 
         self.tz = get_localzone()
 
-    def list_urls(self) -> list:
+    def list_urls(self):
         return ['sysinfo://']
 
     # noinspection PyBroadException
-    def get_state(self, url) -> dir:
+    def get_state(self, url):
         purl = urlparse(url)
         if purl.scheme != 'sysinfo':
             raise UnsupportedException
@@ -50,6 +50,6 @@ class SysInfoPlugin(StatePluginBase):
         return res
 
 
-def load(app: CementApp):
+def load(app):
     app.log.debug('in load')
     handler.register(SysInfoPlugin)
