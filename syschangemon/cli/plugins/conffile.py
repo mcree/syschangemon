@@ -1,16 +1,14 @@
-from urllib.parse import urlparse
-
 import sys
 
-from binaryornot.check import is_binary
-from cement.core import handler, hook
-from cement.core.config import IConfig
-from cement.core.controller import CementBaseController
-from cement.core.foundation import CementApp
-from syschangemon.cli.ext.pluginbase import StatePluginBase, StatePluginInterface, UnsupportedException
-import globre
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
-from syschangemon.core.model import Session, State
+from binaryornot.check import is_binary
+from cement.core import handler
+from syschangemon.cli.ext.pluginbase import StatePluginBase, StatePluginInterface
+import globre
 
 
 class ConffilePlugin(StatePluginBase):

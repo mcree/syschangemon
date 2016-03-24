@@ -3,7 +3,10 @@ import pprint
 import re
 from datetime import datetime, date
 from time import strptime, strftime
-from urllib.parse import urlparse
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 from uuid import uuid4
 from decimal import Decimal
 

@@ -1,7 +1,10 @@
 """SysInfo Plugin for syschangemon."""
 import platform
 import socket
-from urllib.parse import urlparse
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 import sys
 

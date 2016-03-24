@@ -1,12 +1,5 @@
-from abc import abstractmethod
-from urllib.parse import urlparse
-
-from cement.core.foundation import CementApp
 from cement.core.interface import Interface, Attribute
 from cement.core.handler import CementBaseHandler
-from syschangemon.core.model import State
-from syschangemon.core.sessiondiff import SessionDiff
-
 
 class UnsupportedException(BaseException):
     pass
@@ -18,7 +11,7 @@ class StatePluginInterface(Interface):
 
     Meta = Attribute('Handler Meta-data')
 
-    def _setup(app_obj):
+    def _setup(self, app_obj):
         """
         The setup function is called during application initialization and
         must 'setup' the handler object making it ready for the framework
@@ -33,7 +26,7 @@ class StatePluginInterface(Interface):
 
         """
 
-    def enumerate():
+    def enumerate(self):
         """
         Enumerate system attributes
 

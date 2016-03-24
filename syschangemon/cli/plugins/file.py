@@ -10,7 +10,10 @@ import os
 import pwd
 import sys
 from stat import *
-from urllib.parse import urlparse
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 from cement.core import handler
 from cement.core.foundation import CementApp
