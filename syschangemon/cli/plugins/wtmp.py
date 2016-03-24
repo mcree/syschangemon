@@ -1,14 +1,61 @@
+#
+# Contains code from https://github.com/hjacobs/utmp
+#
+
 from time import strftime
 
-import utmp
-from datetime import datetime
 from cement.core.foundation import CementApp
 from syschangemon.cli.ext.pluginbase import StatePluginBase, StatePluginInterface
 from cement.core import handler
 from syschangemon.core.dictdiff import DictDiff
 from syschangemon.core.sessiondiff import SessionDiff
 from tzlocal.unix import get_localzone
-from utmp.reader import UTmpRecordType
+
+import collections
+import datetime
+import struct
+from enum import Enum
+
+
+class UTmpRecordType(Enum):
+    empty = 0
+    run_lvl = 1
+    boot_time = 2
+    new_time = 3
+    old_time = 4
+    init_process = 5
+    login_process = 6
+    user_process = 7
+    dead_process = 8
+    accounting = 9
+
+
+def convert_string(val):
+    if isinstance(val, bytes):
+        return val.rstrip(b'\0').decode()
+    return val
+
+
+class UTmpRecord(collections.namedtuple('UTmpRecord',
+                                        'type pid line id user host exit0 exit1 session' +
+                                        ' sec usec addr0 addr1 addr2 addr3 unused')):
+
+    @property
+    def type(self):
+        return UTmpRecordType(self[0])
+
+    @property
+    def time(self):
+        return datetime.datetime.fromtimestamp(self.sec) + datetime.timedelta(microseconds=self.usec)
+
+STRUCT = struct.Struct('hi32s4s32s256shhiii4i20s')
+
+
+def utmp_read(buf):
+    offset = 0
+    while offset < len(buf):
+        yield UTmpRecord._make(map(convert_string, STRUCT.unpack_from(buf, offset)))
+        offset += STRUCT.size
 
 
 class WtmpPlugin(StatePluginBase):
@@ -37,7 +84,7 @@ class WtmpPlugin(StatePluginBase):
         entries = []
         with open(path, 'rb') as fd:
             buf = fd.read()
-            for entry in utmp.read(buf):
+            for entry in utmp_read(buf):
                 entries.append(entry)
 
         wtmp_sessions = []
