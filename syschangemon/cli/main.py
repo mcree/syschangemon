@@ -56,7 +56,7 @@ class SysChangeMonApp(CementApp):
         # Custom log handler
         log_handler = LogHandler
 
-        core_extensions = ['cement.ext.ext_dummy', 'cement.ext.ext_smtp', 'cement.ext.ext_plugin', 'cement.ext.ext_argparse']
+        core_extensions = ['cement.ext.ext_dummy', 'cement.ext.ext_smtp', 'cement.ext.ext_plugin', 'cement.ext.ext_argparse', 'cement.ext.ext_configparser']
 
         define_handlers = [StatePluginInterface]
 
