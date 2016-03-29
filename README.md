@@ -52,7 +52,33 @@ $ dpkg-buildpackage -uc -ub
 $ dpkg -i ../syschangemon_*_all.deb
 ```
 
-(PPA repository is planned)
+Or you can use our packagecloud.io repository:
+```
+$ curl -s https://packagecloud.io/install/repositories/mcree/syschangemon/script.deb.sh | sudo bash
+
+$ sudo apt-get -y install syschangemon
+```
+
+Alternatively add this to your `/etc/apt/sources.list` file:
+
+```
+deb https://packagecloud.io/mcree/syschangemon/ubuntu/ trusty main
+deb-src https://packagecloud.io/mcree/syschangemon/ubuntu/ trusty main
+```
+
+then run:
+
+```
+$ sudo apt-get update
+
+$ sudo apt-get -y install syschangemon
+```
+
+You can use the same package for:
+* debian/wheezy
+* debian/jessie
+* ubuntu/precise
+* ubuntu/trusty
 
 Help with RPM package creation would be appreciated.
 
