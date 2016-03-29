@@ -1,2 +1,3 @@
+build/* /usr/share/syschangemon
 config/* /etc/syschangemon
 syschangemon/cli/templates/*.html /var/lib/syschangemon/templates

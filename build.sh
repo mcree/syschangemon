@@ -6,11 +6,6 @@ mkdir -p "$DEST"
 rm -rf "$DEST"/*
 pip3 install --target "$DEST" -r "$DEST"/../requirements.txt
 cp -r "$DEST"/../syschangemon "$DEST"
-cat <<EOF >"$DEST"/run.py
-#!/usr/bin/python3
-import sys
-sys.path.insert(0,'.')
-import syschangemon.cli.main
-syschangemon.cli.main.main()
-EOF
+cp "$DEST"/../bin/* "$DEST"
+chmod +x "$DEST"/run.sh
 chmod +x "$DEST"/run.py

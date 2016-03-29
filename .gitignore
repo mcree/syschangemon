@@ -108,3 +108,6 @@ debian/syschangemon.postinst.debhelper
 
 # local virtual enviroment
 venv
+
+# local build
+build

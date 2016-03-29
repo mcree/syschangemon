@@ -16,7 +16,7 @@ def format3(val, *a, **kw):
     return val.format(*a, **kw)
 
 
-def _tr(separator="", cols=[], *args):
+def _tr(*args, separator="", cols=[]):
     rargs = []
     i = 0
     for arg in args:
@@ -30,7 +30,7 @@ def _tr(separator="", cols=[], *args):
     return separator.join(rargs)
 
 
-def tr(separator=" | ", cols=[], wrap=True, *args):
+def tr(*args, separator=" | ", cols=[], wrap=True):
     if wrap:
         res = []
         wargs = []

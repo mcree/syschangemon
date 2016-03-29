@@ -21,6 +21,7 @@ setup(name='syschangemon',
         'nose >= 1.3.0',
         'coverage',
         ### Required to function
+        'setuptools <= 20.1.0',
         'cement >= 2.8.0',
         'globre >= 0.1.3',
         'peewee >= 2.8.0',
