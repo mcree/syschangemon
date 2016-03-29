@@ -28,7 +28,7 @@ Similar software:
 Requirements
 ------------
 
-Python 3.4 or above with PIP. The project aims to have no external binary dependencies. 
+Python 3.2 or above with PIP. The project aims to have no external binary dependencies.
 You are welcome to backport to python 2.
 
 Installation
@@ -45,11 +45,7 @@ $ python setup.py install
 For debian and ubuntu (tested under ubuntu trusty):
 
 ```
-$ sudo apt-add-repository ppa:dh-virtualenv/daily
-
-$ sudp apt-get update
-
-$ sudo apt-get install -y debhelper dh-virtualenv python3.4
+$ sudo apt-get install -y debhelper python3.4
 
 $ dpkg-buildpackage -uc -ub
 

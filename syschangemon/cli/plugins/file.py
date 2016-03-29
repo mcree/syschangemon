@@ -10,14 +10,15 @@ import os
 import pwd
 import sys
 from stat import *
+
+from syschangemon.core.partialhash import compute_from_path
+
 try:
     from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse
 
 from cement.core import handler
-from cement.core.foundation import CementApp
-from partialhash import compute_from_path
 from tzlocal.unix import get_localzone
 
 from syschangemon.cli.ext.pluginbase import StatePluginBase, StatePluginInterface, UnsupportedException

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../syschangemon/.idea/syschangemon.iml" filepath="$PROJECT_DIR$/../syschangemon/.idea/syschangemon.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/syschangemon.iml" filepath="$PROJECT_DIR$/.idea/syschangemon.iml" />
     </modules>
   </component>
 </project>
