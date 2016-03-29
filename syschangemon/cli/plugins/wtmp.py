@@ -12,7 +12,7 @@ from syschangemon.core.sessiondiff import SessionDiff
 from tzlocal.unix import get_localzone
 
 import collections
-import datetime
+from datetime import datetime
 import struct
 from enum import Enum
 
