@@ -278,13 +278,14 @@ class FilePlugin(StatePluginBase):
             e = sys.exc_info()[1]
             res['stat_error'] = e
 
-        try:
-            attrs = os.listxattr(path)
-            for attr in attrs:
-                res['xattr_'+attr] = True
-        except:
-            e = sys.exc_info()[1]
-            res['xattr_error'] = e
+        # todo: backport listxattr for python 3.2
+        #try:
+        #    attrs = os.listxattr(path)
+        #    for attr in attrs:
+        #        res['xattr_'+attr] = True
+        #except:
+        #    e = sys.exc_info()[1]
+        #    res['xattr_error'] = e
 
         compute_hash = True
         if not self._matches_pat_list(path, self.assume_change) \
