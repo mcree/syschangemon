@@ -61,6 +61,9 @@ class TestSandbox(TestCase):
         if os.path.isfile(sandbox + "/files/testfile"):
             os.remove(sandbox + "/files/testfile")
 
+        if os.path.isfile(sandbox + "/syschangemon.log"):
+            os.remove(sandbox + "/syschangemon.log")
+
     @capture
     def command(self, argv):
         """
