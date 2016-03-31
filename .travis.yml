@@ -27,5 +27,5 @@ deploy:
 after_success:
   - dpkg-buildpackage -us -uc
   - cp ../*.deb .
-  - alien -r *.deb
+  - sudo alien -r *.deb
 
