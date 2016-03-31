@@ -1,5 +1,5 @@
 before_install:
-  - pip install codecov
+  - apt-get install -y alien
 language: python
 python:
   - "3.2"
@@ -25,6 +25,7 @@ deploy:
       python: "3.4"
       tags: true
 after_success:
-  - codecov
   - dpkg-buildpackage -us -uc
   - cp ../*.deb .
+  - alien -r *.deb
+
