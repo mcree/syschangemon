@@ -94,7 +94,7 @@ class State(dict):
         url = urlparse(self['url'])
         if len(url.scheme) == 0:
             raise ValueError("value for key 'url' must have valid format, eg: scheme://path")
-        #cache.put(self)
+        cache.put(self)
         return self._model.states.upsert(columns=['url', 'sessionid'], **self)
 
     def __repr__(self):
@@ -120,7 +120,7 @@ class StateCache:
         return str(sessionid) + str(url)
 
     def has(self, sessionid, url):
-        return False  # disable cache
+        #return False  # disable cache
         return self.key(sessionid, url) in self.cache.keys()
 
     def get(self, sessionid, url):
