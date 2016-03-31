@@ -33,6 +33,7 @@ class LogHandler(LoggingLogHandler):
         ns = "%s:%r" % (si[0][-25:], si[1])
         super(LogHandler, self).debug(msg, ns, **kw)
 
+
 class SysChangeMonApp(CementApp):
     class Meta:
         label = 'syschangemon'

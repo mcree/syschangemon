@@ -11,6 +11,7 @@ import pwd
 import sys
 from stat import *
 
+from syschangemon.core.model import Model, Session
 from syschangemon.core.partialhash import compute_from_path
 
 try:
@@ -104,7 +105,16 @@ class FilePlugin(StatePluginBase):
         label = 'file'
         interface = StatePluginInterface
 
-    #_meta = Meta
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.include = []
+        self.exclude = []
+        self.include_pats = []
+        self.exclude_pats = []
+        self.assume_nochange = []
+        self.assume_change = []
+        self.last_session = None
+        self.tz = get_localzone()
 
     @staticmethod
     def _process_pattern_list(l):
@@ -171,25 +181,39 @@ class FilePlugin(StatePluginBase):
 
         c = app.config
 
+        conf_keys = c.keys(self._meta.label)
+
         # get include and exclude list from config file
-        self.include = self._process_pattern_list(c.get(self._meta.label, 'include').split('\n'))
-        self.exclude = self._process_pattern_list(c.get(self._meta.label, 'exclude').split('\n'))
+        if 'include' in conf_keys:
+            self.include = self._process_pattern_list(c.get(self._meta.label, 'include').split('\n'))
+        if 'exclude' in conf_keys:
+            self.exclude = self._process_pattern_list(c.get(self._meta.label, 'exclude').split('\n'))
+        if 'no_assume_nochange' in conf_keys:
+            self.assume_change = self._process_pattern_list(c.get(self._meta.label, 'no_assume_nochange').split('\n'))
 
         # compile globre patterns for include and exclude
-        self.includepats = []
+        self.include_pats = []
         for pat in self.include:
-            self.includepats.append(globre.compile(pat, flags=globre.EXACT, split_prefix=False))
+            self.include_pats.append(globre.compile(pat, flags=globre.EXACT, split_prefix=False))
 
-        self.excludepats = []
+        self.exclude_pats = []
         for pat in self.exclude:
-            self.excludepats.append(globre.compile(pat, flags=globre.EXACT, split_prefix=False))
-
-        self.tz = get_localzone()
+            self.exclude_pats.append(globre.compile(pat, flags=globre.EXACT, split_prefix=False))
 
         os.stat_float_times(True)
 
+        if 'assume_nochange' in conf_keys:
+            self.assume_nochange = [x.strip() for x in c.get(self._meta.label, 'assume_nochange').split(',')]
+
+    @staticmethod
+    def _matches_pat_list(path, pat_list):
+        for pat in pat_list:
+            if pat.match(path):
+                return True
+        return False
+
     def list_urls(self):
-        filelist = []
+        res = []
 
         # find base dirs for include
         self.app.log.debug("enumerating using include: %s exclude: %s" % (self.include, self.exclude))
@@ -201,45 +225,41 @@ class FilePlugin(StatePluginBase):
         for f in flat:
             for name in os.listdir(f):
                 filename = os.path.join(f, name)
-                if os.path.isfile(filename):
-                    for pat in self.includepats:
-                        if pat.match(filename):
-                            filelist.append(filename)
+                if os.path.isfile(filename) and self._matches_pat_list(filename, self.include_pats):
+                        res.append(filename)
 
         # collect deep (recursive) includes
         for d in deep:
             for root, dirs, files in os.walk(d):
                 for name in files:
                     filename = os.path.join(root, name)
-                    for pat in self.includepats:
-                        if pat.match(filename):
-                            filelist.append(filename)
+                    if os.path.isfile(filename) and self._matches_pat_list(filename, self.include_pats):
+                            res.append(filename)
 
         # filter out excludes
-        filteredlist = []
-        for f in filelist:
-            is_exclude = False
-            for pat in self.excludepats:
-                if pat.match(f):
-                    self.app.log.debug("%s excluded by %s" % (f, pat))
-                    is_exclude = True
-                    break
-            if is_exclude == False:
-                filteredlist.append(self._meta.label+'://'+f)
+        filtered_res = []
+        for f in res:
+            if not self._matches_pat_list(f, self.exclude_pats):
+                filtered_res.append(self._meta.label+'://'+f)
 
-        filelist = filteredlist
+        res = filtered_res
 
         #self.app.log.debug("filelist: %s" % filelist)
 
-        return filelist
+        # we cannot run this piece of code in setup() since storage is not set up there
+        db = self.app.storage.db
+        assert isinstance(db, Model)
+        self.last_session = db.last_closed_session()
+
+        return res
 
     # noinspection PyBroadException
     def get_state(self, url):
-        purl = urlparse(url)
-        if purl.scheme != 'file':
+        if str(url).startswith("file://"):
+            path = url[7:]
+        else:
             raise UnsupportedException
         res = {}
-        path = purl.path
         try:
             stat = os.stat(path)
             res['size'] = stat.st_size
@@ -266,12 +286,34 @@ class FilePlugin(StatePluginBase):
             e = sys.exc_info()[1]
             res['xattr_error'] = e
 
-        try:
-            digest = compute_from_path(path, hash_algorithm=hashlib.sha256)
-            res['hash'] = str(binascii.hexlify(digest))
-        except:
-            e = sys.exc_info()[1]
-            res['hash_error'] = e
+        compute_hash = True
+        if not self._matches_pat_list(path, self.assume_change) \
+                and self.last_session is not None \
+                and len(self.assume_nochange) > 0:
+            try:
+                prev = self.last_session.get_state(url)
+                no_change = True
+                for attr in self.assume_nochange:
+                    if res[attr] != prev[attr]:
+                        no_change = False
+                if no_change:
+                    for k, v in prev.items():
+                        # copy all 'non special' values from previous state record
+                        if k not in res.keys() and k not in ['url', 'plugin', 'sessionid', 'id']:
+                            res[k] = v
+                    res['assume_nochange'] = True
+                    compute_hash = False
+            except KeyError:
+                pass  # expected if previous session contains no such url
+
+        if compute_hash:
+            res['assume_nochange'] = False
+            try:
+                digest = compute_from_path(path, hash_algorithm=hashlib.sha256)
+                res['hash'] = binascii.hexlify(digest).decode('utf-8', 'ignore')
+            except:
+                e = sys.exc_info()[1]
+                res['hash_error'] = e
 
         return res
 

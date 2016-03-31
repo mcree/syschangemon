@@ -44,6 +44,7 @@ class TestSysChangeMonBaseController(test.SysChangeMonTestCase):
     def fill_db(self):
         db = self.app.storage.db
         assert isinstance(db, Model)
+        db.delete()  # reset db
         rep = db.new_report()
         rep['text'] = 'report text'
         rep['html'] = '<html><body>report html</body></html>'

@@ -87,7 +87,7 @@ class CementLoader(BaseLoader):
     def get_source(self, environment, template):
         tpl = self.handler.load_template(template)
         if isinstance(tpl, bytes):
-            source = tpl.decode('utf-8')
+            source = tpl.decode('utf-8', 'ignore')
         else:
             source = tpl
         return source, template, lambda: False

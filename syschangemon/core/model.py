@@ -1,22 +1,17 @@
 # coding=utf-8
 
 """ System Change Data Model Classes """
-import pprint
 import re
-from datetime import datetime, date
-from time import strptime, strftime
+from datetime import datetime
+
 try:
     from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse
 from uuid import uuid4
-from decimal import Decimal
 
-import sys
-
-import parsedatetime
 from dateutil.parser import *
-from peewee import BlobField, OperationalError, Field
+from peewee import BlobField, OperationalError
 from playhouse.dataset import DataSet
 from playhouse.dataset import Table
 from tzlocal.unix import get_localzone
@@ -62,6 +57,9 @@ class MyTable(Table):
             return self.insert(**data)
 
 
+date_pat = re.compile('[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}')
+
+
 class State(dict):
 
     @staticmethod
@@ -71,7 +69,7 @@ class State(dict):
             try:
                 # hack string timestamps back to datetime
                 if isinstance(v, str):
-                    if re.match('[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}', v):
+                    if len(v) < 100 and date_pat.match(v):
                         v = parse(v, yearfirst=True, dayfirst=False, fuzzy=True)
                 # hack bytes back to utf8 strings
                 if isinstance(v, bytes) or isinstance(v, bytearray):
@@ -96,6 +94,7 @@ class State(dict):
         url = urlparse(self['url'])
         if len(url.scheme) == 0:
             raise ValueError("value for key 'url' must have valid format, eg: scheme://path")
+        #cache.put(self)
         return self._model.states.upsert(columns=['url', 'sessionid'], **self)
 
     def __repr__(self):
@@ -111,6 +110,28 @@ class State(dict):
         return res
 
 
+class StateCache:
+
+    def __init__(self):
+        self.cache = {}
+
+    @staticmethod
+    def key(sessionid, url):
+        return str(sessionid) + str(url)
+
+    def has(self, sessionid, url):
+        return False  # disable cache
+        return self.key(sessionid, url) in self.cache.keys()
+
+    def get(self, sessionid, url):
+        return self.cache[self.key(sessionid, url)]
+
+    def put(self, state):
+        self.cache[self.key(state['sessionid'], state['url'])] = state
+
+cache = StateCache()
+
+
 class Session(dict):
 
     @staticmethod
@@ -120,7 +141,7 @@ class Session(dict):
             try:
                 # hack string timestamps back to datetime
                 if isinstance(v, str):
-                    if re.match('[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}', v):
+                    if len(v) < 100 and date_pat.match(v):
                         v = parse(v, yearfirst=True, dayfirst=False, fuzzy=True)
                 # hack bytes back to utf8 strings
                 if isinstance(v, bytes) or isinstance(v, bytearray):
@@ -149,9 +170,13 @@ class Session(dict):
         return State(self._model, self['uuid'], **kwargs)
 
     def get_state(self, url):
+        if cache.has(self['uuid'], url):
+            return cache.get(self['uuid'], url)
         res = self._model.states.find_one(url=url, sessionid=self['uuid'])
         if res is not None:
-            return State.from_dict(self._model, res)
+            res = State.from_dict(self._model, res)
+            cache.put(res)
+            return res
         else:
             raise KeyError("state with url:"+url+" for session:"+self['uuid']+" not found")
 
@@ -163,7 +188,12 @@ class Session(dict):
     def find_states(self, **kwargs):
         res = []
         for state in self._model.states.find(sessionid=self['uuid'], **kwargs):
-            res.append(State.from_dict(self._model, state))
+            if cache.has(state['sessionid'], state['url']):
+                stateobj = cache.get(state['sessionid'], state['url'])
+            else:
+                stateobj = State.from_dict(self._model, state)
+                cache.put(stateobj)
+            res.append(stateobj)
         return res
 
     def delete(self):
@@ -212,6 +242,7 @@ class Model:
             self.db.query('CREATE INDEX IF NOT EXISTS idx_session_stamp ON sessions(stamp)')
             self.db.query('CREATE INDEX IF NOT EXISTS idx_state_sessionid ON states(sessionid)')
             self.db.query('CREATE INDEX IF NOT EXISTS idx_state_url ON states(url)')
+            self.db.query('CREATE INDEX IF NOT EXISTS idx_state_url_sessionid ON states(url,sessonid)')
             self.db.query('CREATE INDEX IF NOT EXISTS idx_state_plugin ON states(plugin)')
             self.db.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_uuid ON reports(uuid)')
             self.db.query('CREATE INDEX IF NOT EXISTS idx_reports_stamp ON reports(stamp)')
@@ -226,6 +257,8 @@ class Model:
 
     def last_closed_session(self):
         uuid = self.query('select uuid from sessions where closed=1 order by stamp desc').fetchone()
+        if uuid is None:
+            return None
         return Session.from_dict(self, self.sessions.find_one(uuid=uuid))
 
     def last_report(self):
@@ -233,7 +266,10 @@ class Model:
         return Report.from_dict(self, self.reports.find_one(uuid=uuid))
 
     def recent_closed_sessions(self, count):
-        uuids = self.query('select uuid from sessions where closed=1 order by stamp desc').fetchall()
+        try:
+            uuids = self.query('select uuid from sessions where closed=1 order by stamp desc').fetchall()
+        except OperationalError:
+            return []
         cnt = 0
         res = []
         for uuid in uuids:

@@ -36,10 +36,14 @@ class ConffilePlugin(StatePluginBase):
         self.size_limit = int(c.get(self._meta.label, 'size_limit'))
 
     def process_state(self, state):
-        purl = urlparse(state['url'])
-        path = purl.path
-        if purl.scheme != 'file':
+        if str(state['url']).startswith("file://"):
+            path = state['url'][7:]
+        else:
             return state
+
+        if 'assume_nochange' in state.keys() and state['assume_nochange'] == True:
+            return state
+
         if 'size' in state.keys() and state['size'] is not None:
             if int(state['size']) > self.size_limit:
                 self.app.log.debug("%s is above size limit - skipping" % (path))
@@ -54,7 +58,7 @@ class ConffilePlugin(StatePluginBase):
                 self.app.log.debug("%s seems to be binary - skipping" % (path))
                 return state
             with open(path, mode='rb') as file:
-                state['content'] = file.read()
+                state['content'] = file.read().decode('utf-8', 'replace')
                 #self.app.log.debug("reading conffile contents: %s" % (path))
         except:
             e = sys.exc_info()[1]

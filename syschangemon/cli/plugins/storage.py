@@ -19,7 +19,7 @@ class Storage():
         except:
             pass
 
-        dburl = 'sqlite:///'+dir+"/db.sqlite"
+        dburl = 'sqlite:///'+dir+"/db.sqlite?cache_size=-2000&journal_mode=WAL"
 
         app.log.debug("opening %s" % (dburl))
 

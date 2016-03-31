@@ -4,6 +4,7 @@ import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import sys
 from cement.core.controller import CementBaseController, expose
 from cement.core import hook
 from syschangemon.cli.ext.pluginbase import UnsupportedException
@@ -71,7 +72,7 @@ class SysChangeMonBaseController(CementBaseController):
             sess = recent[0]
 
         q = db.states.find(sessionid=sess['uuid'])
-        db.db.freeze(q, format='csv', filename='/dev/stdout')
+        db.db.freeze(q, format='csv', file_obj=sys.stdout)
 
         self.app.exit_code = 0
         return

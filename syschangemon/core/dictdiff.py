@@ -42,12 +42,13 @@ class DictDiff:
         for key in keys1 & keys2:
             val1 = dict1[key]
             val2 = dict2[key]
+            if isinstance(val1, bytes):
+                val1 = val1.decode('utf-8', 'ignore')
+            if isinstance(val2, bytes):
+                val2 = val2.decode('utf-8', 'ignore')
             if val1 == val2:
                 self.both_eq[key] = val1
             else:
-                if isinstance(val1, bytes):
-                    val1 = val1.decode('utf-8')
-                    val2 = val2.decode('utf-8')
                 if str(val1).find('\n') > 0:
                     self.both_neq_diff[key] = self._diff_text(str(val1), str(val2))
                 else:
