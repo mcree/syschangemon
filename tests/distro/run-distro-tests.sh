@@ -36,6 +36,7 @@ echo "saving log in $log"
 test ! -f ../../../syschangemon*.deb && build_package 2>&1 >>$log
 
 DISTS="
+distrotest-centos-6
 distrotest-centos-7
 distrotest-debian-7
 distrotest-debian-8
