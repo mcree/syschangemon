@@ -7,11 +7,14 @@ interpreters="
 /usr/bin/python3
 "
 
-echo -e "$interpreters" | while read interpreter; do
+for interpreter in $interpreters; do
 
     if [ -x "$interpreter" ]; then
-	"$interpreter" /usr/share/syschangemon/run.py $@
+	PYTHONIOENCODING=utf8 "$interpreter" /usr/share/syschangemon/run.py $@
 	exit $?
     fi
 
 done
+
+echo "python 3 interpreter not found" >&2
+exit 1
