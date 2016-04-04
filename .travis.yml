@@ -1,5 +1,5 @@
 before_install:
-  - apt-get install rpm
+  - sudo apt-get install rpm
   - gem install fpm
 language: python
 rvm:
