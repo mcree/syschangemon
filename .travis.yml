@@ -25,4 +25,4 @@ deploy:
       python: "3.4"
 #      tags: true
 after_success:
-  - make
+  - source /etc/profile.d/rvm.sh && rvm reload && make
