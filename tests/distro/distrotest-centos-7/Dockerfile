@@ -5,7 +5,7 @@ ENV LC_ALL=en_US.UTF-8
 #RUN    curl -s https://packagecloud.io/install/repositories/mcree/syschangemon/script.deb.sh | sudo bash && \
 #    sudo apt-get -y install syschangemon
 ADD syschangemon*.rpm /tmp
-RUN rpm --force -i /tmp/syschangemon*.rpm
+RUN rpm -i /tmp/syschangemon*.rpm
 RUN touch /var/log/wtmp
 ENTRYPOINT syschangemon run && \
     syschangemon collect && \

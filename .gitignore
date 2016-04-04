@@ -111,6 +111,9 @@ venv
 
 # local build
 build
+syschangemon*.deb
+syschangemon*.rpm
+stamp-*
 
 # test sandbox database
 tests/sandbox/storage/*

@@ -1,5 +1,5 @@
-FROM centos:6
-RUN yum -y install https://centos6.iuscommunity.org/ius-release.rpm && yum -y install curl python34u
+FROM fedora:22
+RUN dnf -y install python3
 #RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
 ENV LC_ALL=en_US.UTF-8
 #RUN    curl -s https://packagecloud.io/install/repositories/mcree/syschangemon/script.deb.sh | sudo bash && \
