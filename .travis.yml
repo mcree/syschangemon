@@ -1,18 +1,17 @@
 before_install:
-  - sudo bash install-fpm.sh
+  - set
 language: python
 python:
-#  - "3.2"
-#  - "3.3"
+  - "3.2"
+  - "3.3"
   - "3.4"
-#  - "3.5"
-#  - "3.5-dev" # 3.5 development branch
-#  - "nightly" # currently points to 3.6-dev
+  - "3.5"
+  - "3.5-dev" # 3.5 development branch
+  - "nightly" # currently points to 3.6-dev
 # command to install dependencies
 install: "pip install -r requirements.txt"
 # command to run tests
 script: nosetests
-# try out packagecloud
 deploy:
   - provider: packagecloud
     repository: "syschangemon"
@@ -25,4 +24,4 @@ deploy:
       python: "3.4"
 #      tags: true
 after_success:
-  - source /etc/profile.d/rvm.sh && rvm reload && make
+#  - sudo bash install-fpm.sh
