@@ -1,5 +1,11 @@
 before_install:
-  - sudo apt-get install -y ruby ruby-dev rubygems build-essential rpm
+  - sudo apt-get install -y curl build-essential rpm
+  - sudo gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+  - sudo curl -L https://get.rvm.io | bash -s stable
+  - sudo source /etc/profile.d/rvm.sh
+  - sudo rvm install ruby
+  - sudo rvm use ruby --default
+  - sudo rvm rubygems current
   - sudo gem install fpm
 language: python
 python:
