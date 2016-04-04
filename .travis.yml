@@ -1,7 +1,7 @@
 before_install:
-  - [ $TRAVIS_PYTHON_VERSION == 3.4 ] && sudo apt-get install rpm
-  - [ $TRAVIS_PYTHON_VERSION == 3.4 ] && gem install fpm
-  - [ $TRAVIS_PYTHON_VERSION == 3.4 ] && gem install package_cloud
+  - sudo apt-get install rpm
+  - gem install fpm
+  - gem install package_cloud
 language: python
 rvm:
   - 2.2
@@ -28,7 +28,8 @@ script: nosetests
 #      python: "3.4"
 ##      tags: true
 after_success:
-  - [ $TRAVIS_PYTHON_VERSION == 3.4 ] && make
-  - [ $TRAVIS_PYTHON_VERSION == 3.4 ] && package_cloud push mcree/syschangemon/debian/wheezy *.deb
-  - [ $TRAVIS_PYTHON_VERSION == 3.4 ] && package_cloud push mcree/syschangemon/el/6 *.rpm
+  - echo $TRAVIS_PYTHON_VERSION
+  - make
+  - package_cloud push mcree/syschangemon/debian/wheezy *.deb
+  - package_cloud push mcree/syschangemon/el/6 *.rpm
 #  - sudo bash install-fpm.sh
