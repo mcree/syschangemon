@@ -1,6 +1,9 @@
 before_install:
   - set
+  - gem install fpm
 language: python
+rvm:
+  - 2.2
 python:
   - "3.2"
   - "3.3"
@@ -24,4 +27,5 @@ deploy:
       python: "3.4"
 #      tags: true
 after_success:
+  - make
 #  - sudo bash install-fpm.sh
