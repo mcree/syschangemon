@@ -4,7 +4,7 @@ set -e
 
 [ "$TRAVIS_PYTHON_VERSION" != "3.4" ] && exit
 
-sudo apt-get install rpm
+apt-get install rpm
 gem install fpm
 gem install package_cloud
 make

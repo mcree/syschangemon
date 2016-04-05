@@ -11,4 +11,4 @@ python:
 install: "pip install -r requirements.txt"
 script: nosetests
 after_success:
-  - bash travis-build-package.sh
+  - sudo bash travis-build-package.sh
