@@ -1,14 +1,16 @@
+#!/usr/bin/make -f
+# makefile for syschangemon
 
-DEST=build
-PROGDIR="$(DEST)"/usr/share/syschangemon
-CONFDIR="$(DEST)"/etc/syschangemon
-CRONDIR="$(DEST)"/etc/cron.d
-DOCDIR="$(DEST)"/usr/share/doc/syschangemon
-LOGDIR="$(DEST)"/var/log/syschangemon
-DATADIR="$(DEST)"/var/lib/syschangemon/storage
-TEMPLATEDIR="$(DEST)"/var/lib/syschangemon/templates
-SBINDIR="$(DEST)"/usr/sbin
-STAMPS=stamp-dest stamp-pip stamp-progdir stamp-confdir stamp-crondir stamp-docdir stamp-logdir stamp-datadir stamp-templatedir stamp-sbindir stamp-deb stamp-rpm
+DEST = build
+PROGDIR = "$(DEST)"/usr/share/syschangemon
+CONFDIR = "$(DEST)"/etc/syschangemon
+CRONDIR = "$(DEST)"/etc/cron.d
+DOCDIR = "$(DEST)"/usr/share/doc/syschangemon
+LOGDIR = "$(DEST)"/var/log/syschangemon
+DATADIR = "$(DEST)"/var/lib/syschangemon/storage
+TEMPLATEDIR = "$(DEST)"/var/lib/syschangemon/templates
+SBINDIR = "$(DEST)"/usr/sbin
+STAMPS = stamp-dest stamp-pip stamp-progdir stamp-confdir stamp-crondir stamp-docdir stamp-logdir stamp-datadir stamp-templatedir stamp-sbindir stamp-deb stamp-rpm
 
 all: $(STAMPS)
 
@@ -64,8 +66,25 @@ stamp-sbindir:
 	ln -s ../share/syschangemon/run.sh "$(SBINDIR)/syschangemon"
 	touch stamp-sbindir
 
-VERSION=1.0
-ITERATION=`date +%Y%m%d%H%M%S`
+ifeq ($(origin TRAVIS_TAG), undefined)
+VERSION = 1.0+snapshot
+else
+VERSION = ${TRAVIS_TAG}+release
+endif
+
+ITERATION = `date +%Y%m%d%H%M%S`
+
+DESCRIPTION= \
+Periodically collects system configuration (eg. conffiles in /etc, binary files in /sbin, etc.)\n\
+for changes, it can even run external commands and store their stdout and stderr for change monitoring.\n\
+\n\
+This can be useful as a HIDS (host based intrusion detection system) as well as in a shared working environment\n\
+where several users have administrative access to system configuration.\n\
+\n\
+If changes are found it sends text and html reports to predefined email addresses. It also includes relevant wtmp\n\
+information in the reports.\n\
+\n\
+Similar software: tripwire, samhain, fcheck, changetrack, systraq\n
 
 stamp-deb:
 	fpm -s dir -t deb -C "$(DEST)" \
@@ -73,6 +92,7 @@ stamp-deb:
 	    --name syschangemon \
 	    --version $(VERSION) \
 	    --iteration $(ITERATION) \
+	    --description '$(DESCRIPTION)' \
 	    --license GPLv3+ \
 	    --vendor syschangemon \
 	    --category Administration \
@@ -92,6 +112,7 @@ stamp-rpm:
 	    --name syschangemon \
 	    --version $(VERSION) \
 	    --iteration $(ITERATION) \
+	    --description '$(DESCRIPTION)' \
 	    --license GPLv3+ \
 	    --vendor syschangemon \
 	    --category Administration \

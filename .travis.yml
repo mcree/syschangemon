@@ -1,35 +1,14 @@
-before_install:
-  - sudo apt-get install rpm
-  - gem install fpm
-  - gem install package_cloud
 language: python
 rvm:
   - 2.2
 python:
-#  - "3.2"
-#  - "3.3"
+  - "3.2"
+  - "3.3"
   - "3.4"
-#  - "3.5"
-#  - "3.5-dev" # 3.5 development branch
-#  - "nightly" # currently points to 3.6-dev
-# command to install dependencies
+  - "3.5"
+  - "3.5-dev" # 3.5 development branch
+  - "nightly" # currently points to 3.6-dev
 install: "pip install -r requirements.txt"
-# command to run tests
 script: nosetests
-#deploy:
-#  - provider: packagecloud
-#    repository: "syschangemon"
-#    username: "mcree"
-#    skip_cleanup: true
-#    dist: "ubuntu/trusty"
-#    token:
-#      secure: RQ4BEKr3Oqa1nV7fKkAh0jKrNab4mp5KNg6XKfxHYroekJYx3df/0qbkoZB5TugAmQ7/pnnE9e+F/Ol9DKQd6lbxhXeC+CqUjFTX59RL95DYiLjyXB1KmE6jzd1Z0M4GGHBqwn6c/5+apQ55nZSeop6i4z54cCmiRInILOkDCUSnVYyfElaw5wpYQ3Gm2fUBIwZl3sPPxWkiiN8laAFA4A+oiFJEyH1aC0NC1VdXpIhwiY45Dz5WwGB7qv2z0RMex1vt7cGyDXCCTxZLP2SAU8zCpCeITi6YUdv9l/URmDbee7bcafvYnWnx38or6AZ//n+hFQ32Oc84QiMTlcPEfQSmCcjYjiuwfjMAxa27fn5VNZcyJhRp86iJMrsup8NYDBWmTDbLixJjC7B4t5InP9mX8GY2fUpnb1Ym4drZjJm5V1DOH9Tvcp/kVxuCzpvTcc+e4Sbs/DrnPqHZfxWlYueW/7eYu8WxCTbcGzRRjpF2Q5G56ln3q5srYvd65PGbZA+xFhTOSHzm2phi1anEV5UxdcWGTnzllZxhFHAut0muyuFR3jyDX1V+zBmkD7j+46mY7jrGQpZsZoDXDe2+zf17jcUhjF9mj7pPFIOybJeYuhqDPBcK6Y5/G/QD2CE9Gxj3BtZIEc4hxMufYRBf52qL/yuBhiEqC6eFlz3oXYs=
-#    on:
-#      python: "3.4"
-##      tags: true
 after_success:
-  - echo $TRAVIS_PYTHON_VERSION
-  - make
-  - package_cloud push mcree/syschangemon/debian/wheezy *.deb
-  - package_cloud push mcree/syschangemon/el/6 *.rpm
-#  - sudo bash install-fpm.sh
+  - bash travis-build-package.sh
