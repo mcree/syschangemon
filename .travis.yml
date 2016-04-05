@@ -7,7 +7,7 @@ language: python
 rvm:
   - 2.2
 python:
-  - 3.2
+#  - 3.2
 #  - 3.3
   - 3.4
 #  - 3.5
@@ -16,6 +16,7 @@ python:
 install: "pip install -r requirements.txt"
 script: nosetests --with-coverage --cover-package=syschangemon
 deploy:
+  skip_cleanup: true
   provider: script
   script: travis-build-package.sh
 after_success:
