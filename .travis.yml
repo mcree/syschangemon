@@ -1,3 +1,4 @@
+# travis CI configuration for syschangemon
 before_install:
   - pip install codecov
 language: python
