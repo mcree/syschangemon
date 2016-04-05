@@ -1,3 +1,5 @@
+before_install:
+  - pip install codecov
 language: python
 rvm:
   - 2.2
@@ -9,8 +11,11 @@ python:
   - "3.5-dev" # 3.5 development branch
   - "nightly" # currently points to 3.6-dev
 install: "pip install -r requirements.txt"
-script: nosetests
+script: nosetests --with-coverage --cover-package=syschangemon
 after_success:
+  - codecov
   - gem install fpm
   - gem install package_cloud
+  - sudo apt-get -y install rpm
+  - make
   - sudo bash travis-build-package.sh
