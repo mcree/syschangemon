@@ -20,6 +20,8 @@ before_deploy:
   - sudo apt-get -y install rpm
 deploy:
   skip_cleanup: true
+  provider: script
+  script: /bin/true
   on:
     python: 3.4
 after_deploy:
