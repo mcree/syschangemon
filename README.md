@@ -2,6 +2,7 @@ syschangemon - System Change Monitor
 ==============================================================================
 
 [![Build Status](https://travis-ci.org/mcree/syschangemon.svg?branch=master)](https://travis-ci.org/mcree/syschangemon)
+[![codecov.io](https://codecov.io/github/mcree/syschangemon/coverage.svg?branch=master)](https://codecov.io/github/mcree/syschangemon?branch=master)
 
 Introduction
 ------------
