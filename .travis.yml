@@ -7,12 +7,12 @@ language: python
 rvm:
   - 2.2
 python:
-  - "3.2"
-  - "3.3"
-  - "3.4"
-  - "3.5"
-  - "3.5-dev" # 3.5 development branch
-  - "nightly" # currently points to 3.6-dev
+  - 3.2
+#  - 3.3
+  - 3.4
+#  - 3.5
+#  - 3.5-dev # 3.5 development branch
+#  - nightly # currently points to 3.6-dev
 install: "pip install -r requirements.txt"
 script: nosetests --with-coverage --cover-package=syschangemon
 deploy:
