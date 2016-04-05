@@ -1,8 +1,5 @@
 before_install:
   - pip install codecov
-  - gem install fpm
-  - gem install package_cloud
-  - sudo apt-get -y install rpm
 language: python
 rvm:
   - 2.2
@@ -15,10 +12,17 @@ python:
 #  - nightly # currently points to 3.6-dev
 install: "pip install -r requirements.txt"
 script: nosetests --with-coverage --cover-package=syschangemon
-deploy:
-  skip_cleanup: true
-  provider: script
-  script: travis-build-package.sh
 after_success:
   - codecov
+before_deploy:
+  - gem install fpm
+  - gem install package_cloud
+  - sudo apt-get -y install rpm
+deploy:
+  skip_cleanup: true
+  on:
+    python: 3.4
+after_deploy:
   - make
+  - package_cloud push mcree/syschangemon/debian/wheezy *.deb
+  - package_cloud push mcree/syschangemon/el/6 *.rpm

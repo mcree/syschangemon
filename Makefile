@@ -66,7 +66,7 @@ stamp-sbindir:
 	ln -s ../share/syschangemon/run.sh "$(SBINDIR)/syschangemon"
 	touch stamp-sbindir
 
-ifeq ($(origin TRAVIS_TAG), undefined)
+ifndef TRAVIS_TAG
 VERSION = 1.0+snapshot
 else
 VERSION = ${TRAVIS_TAG}+release
